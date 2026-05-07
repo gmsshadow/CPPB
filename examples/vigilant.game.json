@@ -1,0 +1,127 @@
+{
+  "$schema": "cortex-game-definition/v2",
+  "id": "vigilant",
+  "name": "Vigilant",
+  "version": "0.1.0",
+  "description": "Modern occult investigation. Investigators stand against the dark; some draw their power from it.",
+
+  "dice_pool": ["d4", "d6", "d8", "d10", "d12"],
+
+  "actor_types": {
+    "investigator": {
+      "label": "Investigator",
+      "prime_sets": [
+        {
+          "id": "distinctions",
+          "label": "Distinctions",
+          "icon": "scroll",
+          "count": { "min": 3, "max": 3 },
+          "default_dice": ["d8"],
+          "hinder": { "die": "d4", "grants_plot_point": true },
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": false,
+            "has_sfx": true,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        },
+        {
+          "id": "approaches",
+          "label": "Approaches",
+          "icon": "user",
+          "items": [
+            { "name": "Mind" },
+            { "name": "Body" },
+            { "name": "Soul" }
+          ],
+          "dice": ["d4", "d6", "d8", "d10"],
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": false,
+            "has_sfx": false,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        },
+        {
+          "id": "skills",
+          "label": "Skills",
+          "icon": "bullseye",
+          "items": [
+            { "name": "Combat" }, { "name": "Crime" },     { "name": "Investigation" },
+            { "name": "Lore" },   { "name": "Medicine" },  { "name": "Persuasion" },
+            { "name": "Stealth" },{ "name": "Tech" }
+          ],
+          "dice": ["d4", "d6", "d8", "d10"],
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": false,
+            "has_sfx": false,
+            "has_limits": false,
+            "has_sub_traits": true,
+            "sub_traits_label": "Specialties",
+            "sub_traits_have_dice": true,
+            "sub_traits_dice": ["d8", "d10"]
+          }
+        },
+        {
+          "id": "power_sets",
+          "label": "Power Sets",
+          "icon": "bolt",
+          "count": { "min": 0, "max": 2 },
+          "settings": {
+            "has_label": true,
+            "has_dice": false,
+            "has_description": true,
+            "has_statement": false,
+            "has_sfx": true,
+            "has_limits": true,
+            "limits_required": { "min": 1 },
+            "has_sub_traits": true,
+            "sub_traits_label": "Powers",
+            "sub_traits_have_dice": true,
+            "sub_traits_dice": ["d6", "d8", "d10", "d12"]
+          }
+        },
+        {
+          "id": "signature_items",
+          "label": "Signature Items",
+          "icon": "crosshairs",
+          "count": { "min": 0, "max": 3 },
+          "default_dice": ["d6"],
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": true,
+            "has_statement": false,
+            "has_sfx": true,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        }
+      ],
+
+      "extras": {
+        "milestones": { "enabled": true, "icon": "medal" },
+        "stress": {
+          "enabled": true,
+          "icon": "shield-alt",
+          "tracks": [
+            { "id": "physical",  "label": "Physical"  },
+            { "id": "mental",    "label": "Mental"    },
+            { "id": "spiritual", "label": "Spiritual" }
+          ],
+          "trauma_enabled": true
+        },
+        "plot_points": { "enabled": true, "starting": 1, "icon": "coins" }
+      }
+    }
+  }
+}

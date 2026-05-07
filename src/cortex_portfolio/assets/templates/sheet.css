@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Cortex character portfolio — base stylesheet
+
+   Layout strategy: the body is a sequence of independent block-level rows.
+   Each row is its own small flex container. WeasyPrint can page-break
+   between rows freely; flex containment is local to each row.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Cortex";
+  src: url("../fonts/cortex-icons.woff") format("woff");
+  font-weight: normal; font-style: normal;
+}
+@font-face {
+  font-family: "FA Solid";
+  src: url("../fonts/fa-solid-900.woff2") format("woff2");
+  font-weight: 900; font-style: normal;
+}
+@font-face {
+  font-family: "FA Regular";
+  src: url("../fonts/fa-regular-400.woff2") format("woff2");
+  font-weight: 400; font-style: normal;
+}
+
+/* --------------------------------------------------------------------------
+   Page setup
+   -------------------------------------------------------------------------- */
+@page {
+  size: Letter;
+  margin: 0.5in 0.55in 0.6in 0.55in;
+  @bottom-left  { content: string(charname);
+                  font: 9pt "Helvetica", sans-serif; color: #777; }
+  @bottom-right { content: string(gamename) " \2014 page " counter(page) " / " counter(pages);
+                  font: 9pt "Helvetica", sans-serif; color: #777; }
+}
+
+/* --------------------------------------------------------------------------
+   Tokens & baseline typography
+   -------------------------------------------------------------------------- */
+:root {
+  --ink:       #1a1a1a;
+  --rule:      #c8c2b8;
+  --accent:    #6a1b1b;
+  --muted:     #6c6660;
+  --paper:     #fdfcf8;
+  --highlight: #f3ecdc;
+  --col-gap:   16pt;
+}
+
+html, body {
+  font-family: "Georgia", "Cambria", serif;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 10.5pt;
+  line-height: 1.35;
+  margin: 0; padding: 0;
+}
+
+h1, h2 { font-family: "Helvetica", "Arial", sans-serif; font-weight: 600; }
+h1 { font-size: 22pt; margin: 0; letter-spacing: 0.5pt; }
+h2 { font-size: 11pt; margin: 0 0 6pt 0;
+     text-transform: uppercase; letter-spacing: 1.5pt;
+     color: var(--accent);
+     border-bottom: 1.5pt solid var(--accent);
+     padding-bottom: 2pt; }
+
+/* --------------------------------------------------------------------------
+   Header band
+   -------------------------------------------------------------------------- */
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 14pt;
+  padding-bottom: 8pt;
+  border-bottom: 2pt solid var(--ink);
+}
+.header .name      { string-set: charname content(text); }
+.header .game-name { string-set: gamename content(text); font-weight: 600; }
+.header .actor-type-name { font-size: 8.5pt; text-transform: uppercase;
+                           letter-spacing: 1pt; color: var(--accent); }
+.header .concept   { color: var(--muted); font-style: italic; }
+.header .meta      { text-align: right; font-size: 9.5pt; color: var(--muted);
+                     line-height: 1.5; }
+
+.identity-row { display: flex; gap: 12pt; align-items: baseline; margin-top: 3pt; }
+.identity-row .callsign { font-family: "Helvetica", sans-serif; font-weight: 600;
+                          font-size: 11pt; color: var(--accent);
+                          letter-spacing: 0.5pt; }
+
+.plot-points {
+  display: inline-flex; align-items: center; gap: 6pt;
+  padding: 3pt 9pt;
+  background: var(--accent); color: white;
+  border-radius: 99pt;
+  font-family: "Helvetica", sans-serif; font-weight: 600;
+  font-size: 9.5pt; letter-spacing: 0.5pt;
+  margin-top: 5pt;
+}
+.plot-points .section-icon { color: white; margin-right: 0; }
+
+/* --------------------------------------------------------------------------
+   Rows: the body is a sequence of these. Each is independently page-breakable.
+   -------------------------------------------------------------------------- */
+.row {
+  margin-bottom: 12pt;
+}
+
+.row--pair {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--col-gap);
+}
+.row--pair > .sec {
+  flex: 1 1 0;
+  min-width: 0;          /* allow flex children to wrap text */
+}
+
+.row--full > .sec {
+  display: block;
+}
+
+.sec {
+  break-inside: avoid;
+}
+
+/* --------------------------------------------------------------------------
+   Section heading icon
+   -------------------------------------------------------------------------- */
+.section-icon {
+  font-family: "FA Solid"; font-weight: 900;
+  margin-right: 0.45em; font-size: 0.95em;
+  color: var(--accent);
+  vertical-align: -0.05em;
+}
+
+/* --------------------------------------------------------------------------
+   Trait rows.
+     <li class="trait">
+       <div class="trait-head"> name + die </div>
+       <div class="trait-body"> details, sfx, sub-traits </div>
+     </li>
+   -------------------------------------------------------------------------- */
+.trait-list { list-style: none; padding: 0; margin: 0; }
+
+.trait { padding: 4pt 0; border-bottom: 0.5pt dotted var(--rule); }
+.trait:last-child { border-bottom: none; }
+
+.trait-head { display: flex; align-items: baseline; gap: 8pt; }
+.trait-head .name      { flex: 1 1 auto; font-weight: 600; }
+.trait-head .die-cell  { flex: 0 0 auto; }
+
+.trait-body { margin-top: 2pt; }
+.trait-body .detail            { color: var(--muted); font-size: 9.5pt; margin: 0; }
+.trait-body .detail--statement { font-style: italic; }
+
+.sfx-list, .limits-list {
+  list-style: none; padding: 0 0 0 14pt;
+  margin: 3pt 0 0 0; font-size: 9.5pt;
+}
+.sfx-list li, .limits-list li { padding: 1pt 0; color: var(--ink); }
+.sfx-list li::before     { content: "\25C6"; color: var(--accent);
+                           margin-right: 5pt; margin-left: -12pt; }
+.limits-list li::before  { content: "\2298"; color: var(--accent);
+                           margin-right: 5pt; margin-left: -12pt; }
+
+/* Sub-traits use a flex row (name fills, dice right-align). Arrow is a real
+   flex item via ::before, sitting at the start of the row. No hanging indent
+   trick -- WeasyPrint's flex+negative-margin interaction is unreliable. */
+.sub-traits {
+  list-style: none; padding: 0 0 0 4pt;
+  margin: 3pt 0 0 0; font-size: 9.5pt;
+}
+.sub-traits li {
+  display: flex; align-items: baseline; gap: 6pt;
+  padding: 1pt 0; color: var(--ink);
+}
+.sub-traits li::before   {
+  content: "\2192"; color: var(--accent);
+  flex: 0 0 auto;
+}
+.sub-traits li .sub-name { flex: 1 1 auto; }
+.sub-traits li .die-cell { flex: 0 0 auto; }
+
+/* When the parent trait has no die rating (e.g. Power Sets), the right-edge
+   alignment becomes meaningless -- the parent has no die to align with --
+   and on full-width sections the die ends up floating an inch from its name.
+   In that case, pack name+die tightly on the left and let the row breathe. */
+.sub-traits--inline li .sub-name { flex: 0 0 auto; }
+.sub-traits--inline li .die-cell { flex: 0 0 auto; margin-right: auto; }
+
+/* --------------------------------------------------------------------------
+   The dice glyph
+   -------------------------------------------------------------------------- */
+.die {
+  font-family: "Cortex";
+  font-size: 15pt;
+  line-height: 1;
+  color: var(--ink);
+  vertical-align: -0.18em;
+  display: inline-block;
+  min-width: 22pt;
+  text-align: center;
+}
+/* Multi-die rows: tighten so adjacent dice sit close together */
+.die-cell .die + .die { margin-left: 1pt; }
+
+.die--empty   { font-family: inherit; font-size: 12pt; color: var(--muted); }
+.die--unknown { font-family: inherit; font-size: 9pt;  color: red; }
+
+/* --------------------------------------------------------------------------
+   Stress tracks
+   -------------------------------------------------------------------------- */
+.stress-tracks { display: flex; flex-direction: column; gap: 3pt; }
+.stress-row {
+  display: flex; align-items: baseline; gap: 8pt;
+  padding: 3pt 0;
+  border-bottom: 0.5pt dotted var(--rule);
+}
+.stress-row:last-child { border-bottom: none; }
+.stress-row .label    { flex: 1 1 auto; font-weight: 600; }
+.stress-row .die-cell { flex: 0 0 auto; }
+.stress-row .trauma-tag {
+  color: var(--accent);
+  font-size: 8.5pt;
+  text-transform: uppercase; letter-spacing: 1pt;
+  margin-left: 8pt;
+}
+
+/* --------------------------------------------------------------------------
+   Milestones
+   -------------------------------------------------------------------------- */
+.milestone {
+  background: var(--highlight);
+  padding: 7pt 10pt;
+  border-radius: 2pt;
+  margin-bottom: 6pt;
+  break-inside: avoid;
+}
+.milestone:last-child { margin-bottom: 0; }
+.milestone .ms-name { font-weight: 600; margin-bottom: 4pt; }
+.milestone .tier    { display: flex; gap: 8pt; margin: 2pt 0; font-size: 9.5pt; }
+.milestone .tier-key   { flex: 0 0 38pt; font-weight: 600; color: var(--accent); }
+.milestone .tier-value { flex: 1 1 auto; }
+
+/* --------------------------------------------------------------------------
+   Notes
+   -------------------------------------------------------------------------- */
+.notes p { margin: 0; }

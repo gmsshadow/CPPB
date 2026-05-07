@@ -1,0 +1,174 @@
+{# ============================================================================
+   Cortex character portfolio — page template
+
+   The renderer hands us `rows`, where each row is a list of 1 or 2 section
+   descriptors. Each row becomes its own block-level container so WeasyPrint
+   can page-break cleanly between rows.
+
+   Trait rendering is driven by capability flags in `sec.settings`, not by a
+   hard-coded section type. has_label / has_dice / has_statement / has_sfx /
+   has_sub_traits / etc. determine what gets emitted.
+   ============================================================================ #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ character.identity.name }} — {{ game.name }}</title>
+  <link rel="stylesheet" href="sheet.css">
+</head>
+<body>
+
+  {# ============================================================
+     Reusable macros
+     ============================================================ #}
+
+  {% macro section_heading(label, icon) %}
+    <h2>
+      {% if icon %}<span class="section-icon">{{ icon_glyph(icon) }}</span>{% endif %}
+      {{ label }}
+    </h2>
+  {% endmacro %}
+
+  {% macro trait_li(t, settings) %}
+    {# Capability flags read off the prime-set settings; fall back to data
+       presence if a flag is unset (so half-configured definitions still
+       render usefully). #}
+    {% set show_dice       = settings.has_dice if settings.has_dice is not none else t.dice is defined %}
+    {% set show_statement  = settings.has_statement and t.statement %}
+    {% set show_description= settings.has_description and t.description %}
+    {% set show_sfx        = settings.has_sfx and t.sfx %}
+    {% set show_limits     = settings.has_limits and t.limits %}
+    {% set show_subtraits  = settings.has_sub_traits and t.sub_traits %}
+    {% set sub_label       = settings.sub_traits_label or 'Sub-traits' %}
+    {% set sub_have_dice   = settings.sub_traits_have_dice if settings.sub_traits_have_dice is not none else true %}
+
+    <li class="trait">
+      <div class="trait-head">
+        <span class="name">{{ t.name }}</span>
+        {% if show_dice %}
+          <span class="die-cell">{{ t.dice | dice }}</span>
+        {% endif %}
+      </div>
+
+      {% if show_statement or show_description or show_sfx or show_limits or show_subtraits %}
+        <div class="trait-body">
+          {% if show_statement %}
+            <p class="detail detail--statement">"{{ t.statement }}"</p>
+          {% endif %}
+          {% if show_description %}
+            <p class="detail">{{ t.description }}</p>
+          {% endif %}
+          {% if show_subtraits %}
+            <ul class="sub-traits{% if not show_dice %} sub-traits--inline{% endif %}" data-label="{{ sub_label }}">
+              {% for sub in t.sub_traits %}
+                <li>
+                  <span class="sub-name">{{ sub.name }}</span>
+                  {% if sub_have_dice %}
+                    <span class="die-cell">{{ sub.dice | dice }}</span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if show_sfx %}
+            <ul class="sfx-list">
+              {% for sfx in t.sfx %}
+                <li><strong>{{ sfx.name }}.</strong> {{ sfx.text }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if show_limits %}
+            <ul class="limits-list">
+              {% for lim in t.limits %}
+                <li><strong>{{ lim.name }}.</strong> {{ lim.text }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endif %}
+    </li>
+  {% endmacro %}
+
+  {% macro render_section(sec) %}
+    <section class="sec sec--{{ sec.kind }}{% if sec.kind == 'prime_set' %} sec--ps-{{ sec.ps_id }}{% endif %}">
+      {{ section_heading(sec.label, sec.icon) }}
+
+      {% if sec.kind == 'prime_set' %}
+        <ul class="trait-list">
+          {% for t in sec.data %}{{ trait_li(t, sec.settings) }}{% endfor %}
+        </ul>
+
+      {% elif sec.kind == 'stress' %}
+        <div class="stress-tracks">
+          {% for track in sec.data.tracks %}
+            <div class="stress-row">
+              <span class="label">{{ track.label }}</span>
+              <span class="die-cell">{{ sec.data.stress.get(track.id) | dice }}</span>
+              {% if sec.data.trauma_enabled %}
+                <span class="trauma-tag">trauma</span>
+                <span class="die-cell">{{ sec.data.trauma.get(track.id) | dice }}</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+      {% elif sec.kind == 'milestones' %}
+        {% for m in sec.data %}
+          <div class="milestone">
+            <div class="ms-name">{{ m.name }}</div>
+            {% for tier_key, tier_val in m.tiers.items() %}
+              <div class="tier">
+                <span class="tier-key">{{ tier_key }}</span>
+                <span class="tier-value">{{ tier_val }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+
+      {% elif sec.kind == 'notes' %}
+        <div class="notes"><p>{{ sec.data }}</p></div>
+      {% endif %}
+    </section>
+  {% endmacro %}
+
+  {# ============================================================
+     Page content
+     ============================================================ #}
+
+  <header class="header">
+    <div>
+      <h1 class="name">{{ character.identity.name }}</h1>
+      <div class="identity-row">
+        {% if character.identity.callsign %}
+          <span class="callsign">"{{ character.identity.callsign }}"</span>
+        {% endif %}
+        {% if character.identity.concept %}
+          <span class="concept">{{ character.identity.concept }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="meta">
+      <div class="game-name">{{ game.name }}</div>
+      <div class="actor-type-name">{{ actor_type.label }}</div>
+      {% if character.identity.player %}
+        <div>Played by {{ character.identity.player }}</div>
+      {% endif %}
+      {% if character.extras and character.extras.plot_points is not none %}
+        <div class="plot-points">
+          <span class="section-icon">{{ icon_glyph('coins') }}</span>
+          {{ character.extras.plot_points }} PP
+        </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    {% for row in rows %}
+      <div class="row{% if row|length == 2 %} row--pair{% else %} row--full{% endif %}">
+        {% for sec in row %}{{ render_section(sec) }}{% endfor %}
+      </div>
+    {% endfor %}
+  </main>
+
+</body>
+</html>

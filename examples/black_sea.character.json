@@ -1,0 +1,36 @@
+{
+  "$schema": "cortex-character/v2",
+  "game_definition": "hammerheads",
+  "game_definition_version": "0.2.0",
+  "actor_type": "scene",
+
+  "identity": {
+    "name": "The Black Sea Approach",
+    "concept": "A storm-shrouded carrier strike against fortified coastal defenses"
+  },
+
+  "prime_sets": {
+    "doom_pool": [
+      { "name": "Doom Pool", "dice": ["d6", "d6"] }
+    ],
+    "scene_extras": [
+      {
+        "name": "Storm Front",
+        "dice": ["d8"],
+        "description": "Heavy weather grounds anything not already airborne. Step up the difficulty of any Notice or Operate roll."
+      },
+      {
+        "name": "Coastal AAA Battery",
+        "dice": ["d10"],
+        "description": "Radar-guided. Will spend its first action acquiring lock; subsequent actions fire."
+      },
+      {
+        "name": "Ammunition Supply",
+        "dice": ["d6"],
+        "description": "Limited munitions for sustained engagement. Spends down across the scene."
+      }
+    ]
+  },
+
+  "notes": "If the Doom Pool reaches d12+d12, the GM may end the scene. Storm Front escalates if the fight runs long."
+}

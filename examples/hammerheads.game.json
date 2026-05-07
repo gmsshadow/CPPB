@@ -1,0 +1,167 @@
+{
+  "$schema": "cortex-game-definition/v2",
+  "id": "hammerheads",
+  "name": "Hammerheads",
+  "version": "0.2.0",
+  "description": "Naval aviators in a near-future conflict.",
+
+  "dice_pool": ["d4", "d6", "d8", "d10", "d12"],
+
+  "actor_types": {
+    "character": {
+      "label": "Character",
+      "prime_sets": [
+        {
+          "id": "distinctions",
+          "label": "Distinctions",
+          "icon": "scroll",
+          "count": { "min": 3, "max": 3 },
+          "default_dice": ["d8"],
+          "hinder": { "die": "d4", "grants_plot_point": true },
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": false,
+            "has_sfx": true,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        },
+        {
+          "id": "attributes",
+          "label": "Attributes",
+          "icon": "user",
+          "items": [
+            { "name": "Mental" },
+            { "name": "Physical" },
+            { "name": "Social" }
+          ],
+          "dice": ["d4", "d6", "d8", "d10"],
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": false,
+            "has_sfx": false,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        },
+        {
+          "id": "skills",
+          "label": "Skills",
+          "icon": "bullseye",
+          "items": [
+            { "name": "Fight" }, { "name": "Fly" }, { "name": "Notice" },
+            { "name": "Operate" }, { "name": "Influence" }, { "name": "Know" }
+          ],
+          "dice": ["d4", "d6", "d8", "d10", "d12"],
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": false,
+            "has_sfx": false,
+            "has_limits": false,
+            "has_sub_traits": true,
+            "sub_traits_label": "Specialties",
+            "sub_traits_have_dice": true,
+            "sub_traits_dice": ["d8", "d10"],
+            "sub_traits_max": 2
+          }
+        },
+        {
+          "id": "values",
+          "label": "Values",
+          "icon": "heart",
+          "items": [
+            { "name": "Duty" }, { "name": "Glory" }, { "name": "Justice" },
+            { "name": "Liberty" }, { "name": "Love" }, { "name": "Truth" }
+          ],
+          "dice": ["d4", "d6", "d8", "d10"],
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": true,
+            "has_sfx": false,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        },
+        {
+          "id": "signature_assets",
+          "label": "Signature Assets",
+          "icon": "crosshairs",
+          "count": { "min": 0, "max": 3 },
+          "default_dice": ["d6"],
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": true,
+            "has_statement": false,
+            "has_sfx": true,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        }
+      ],
+
+      "extras": {
+        "milestones": { "enabled": true, "icon": "medal" },
+        "stress": {
+          "enabled": true,
+          "icon": "shield-alt",
+          "tracks": [
+            { "id": "physical", "label": "Physical" },
+            { "id": "mental",   "label": "Mental"   },
+            { "id": "social",   "label": "Social"   }
+          ],
+          "trauma_enabled": true
+        },
+        "plot_points": { "enabled": true, "starting": 1, "icon": "coins" }
+      }
+    },
+
+    "scene": {
+      "label": "Scene",
+      "prime_sets": [
+        {
+          "id": "doom_pool",
+          "label": "Doom Pool",
+          "icon": "skull",
+          "count": { "min": 1, "max": 1 },
+          "default_dice": ["d6", "d6"],
+          "settings": {
+            "has_label": false,
+            "has_dice": true,
+            "has_description": false,
+            "has_statement": false,
+            "has_sfx": false,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        },
+        {
+          "id": "scene_extras",
+          "label": "Extras",
+          "icon": "user",
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_description": true,
+            "has_statement": false,
+            "has_sfx": false,
+            "has_limits": false,
+            "has_sub_traits": false
+          }
+        }
+      ],
+      "extras": {
+        "stress": { "enabled": false },
+        "plot_points": { "enabled": false }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "cortex-character/v2",
+  "game_definition": "WRONG-GAME-NAME",
+  "actor_type": "character",
+
+  "identity": { "name": "Test Subject" },
+
+  "prime_sets": {
+    "distinctions": [
+      { "name": "Only One Distinction", "dice": ["d8"] }
+    ],
+
+    "attributes": [
+      { "name": "Mental",   "dice": ["d6"] },
+      { "name": "Physical", "dice": ["d20"] },
+      { "name": "Charisma", "dice": ["d8"] }
+    ],
+
+    "skills": [
+      { "name": "Fly",       "dice": "d10" },
+      { "name": "Notice",    "dice": ["d8"],
+        "sub_traits": [{ "name": "Eavesdropping", "dice": ["d12"] }],
+        "sfx": [{ "name": "Bonus", "text": "should not be allowed here" }]
+      }
+    ],
+
+    "values": [
+      { "name": "Duty", "dice": ["d8"], "statement": "Test value" }
+    ],
+
+    "ghosts_and_apparitions": [
+      { "name": "Spectral Aunt", "dice": ["d6"] }
+    ]
+  },
+
+  "extras": {
+    "stress": { "physical": null, "mental": "d6", "biological": "d8" },
+    "trauma": { "physical": null, "mental": null, "social": null },
+    "plot_points": 1
+  }
+}

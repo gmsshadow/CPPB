@@ -1,0 +1,124 @@
+{
+  "$schema": "cortex-character/v2",
+  "game_definition": "vigilant",
+  "game_definition_version": "0.1.0",
+  "actor_type": "investigator",
+
+  "identity": {
+    "name": "Dr. Mina Harker",
+    "callsign": "Nightshade",
+    "concept": "Infected pathologist hunting the thing that turned her",
+    "player": "Nicholas"
+  },
+
+  "prime_sets": {
+    "distinctions": [
+      {
+        "name": "Forensic Pathologist",
+        "dice": ["d8"],
+        "sfx": [
+          { "name": "Hinder", "text": "Switch out this distinction's d8 for a d4 to gain a Plot Point." }
+        ]
+      },
+      {
+        "name": "Half-Turned",
+        "dice": ["d8"],
+        "sfx": [
+          { "name": "Hinder", "text": "Switch out this distinction's d8 for a d4 to gain a Plot Point." },
+          { "name": "Predator's Calm", "text": "When acting against vampiric creatures, spend a Plot Point to step up Mind for one roll." }
+        ]
+      },
+      {
+        "name": "Owes the Wrong People",
+        "dice": ["d8"]
+      }
+    ],
+
+    "approaches": [
+      { "name": "Mind", "dice": ["d10"] },
+      { "name": "Body", "dice": ["d8"]  },
+      { "name": "Soul", "dice": ["d6"]  }
+    ],
+
+    "skills": [
+      { "name": "Combat",        "dice": ["d6"] },
+      { "name": "Crime",         "dice": ["d6"] },
+      { "name": "Investigation", "dice": ["d10"],
+        "sub_traits": [
+          { "name": "Forensics", "dice": ["d10"] },
+          { "name": "Occult Crime Scenes", "dice": ["d8"] }
+        ]
+      },
+      { "name": "Lore",          "dice": ["d8"],
+        "sub_traits": [{ "name": "Vampires", "dice": ["d10"] }]
+      },
+      { "name": "Medicine",      "dice": ["d10"] },
+      { "name": "Persuasion",    "dice": ["d6"] },
+      { "name": "Stealth",       "dice": ["d8"] },
+      { "name": "Tech",          "dice": ["d6"] }
+    ],
+
+    "power_sets": [
+      {
+        "name": "Tainted Blood",
+        "description": "An incomplete vampiric turn six months ago left her with the gifts but not the full curse. She is still Mina; she will not be Mina forever.",
+        "sub_traits": [
+          { "name": "Predator's Senses", "dice": ["d8"]  },
+          { "name": "Inhuman Strength",  "dice": ["d10"] },
+          { "name": "Mesmerism",         "dice": ["d6"]  }
+        ],
+        "sfx": [
+          {
+            "name": "Feed",
+            "text": "Step up or double Inhuman Strength for one roll. Add a Hunger complication d6, or step it up if it already exists."
+          },
+          {
+            "name": "Resilient",
+            "text": "Spend a Plot Point to ignore physical stress or trauma from a single non-magical attack."
+          }
+        ],
+        "limits": [
+          {
+            "name": "Sunlight",
+            "text": "Earn 1 PP when sunlight, holy ground, or running water shuts down all Tainted Blood powers until the next nightfall."
+          },
+          {
+            "name": "Hunger",
+            "text": "Earn 1 PP when Hunger or unfed thirst forces you into a poor decision in a scene."
+          }
+        ]
+      }
+    ],
+
+    "signature_items": [
+      {
+        "name": "Grandfather's Crucifix",
+        "dice": ["d6"],
+        "description": "Antique silver, blessed three times. A reminder of the man she was supposed to marry."
+      },
+      {
+        "name": "Field Autopsy Kit",
+        "dice": ["d8"],
+        "description": "Modified for fast triage of the unnatural. She has dissected things that should not have organs."
+      }
+    ]
+  },
+
+  "extras": {
+    "milestones": [
+      {
+        "name": "Becoming",
+        "tiers": {
+          "1 XP":  "Use a Tainted Blood power in front of a colleague who didn't already know.",
+          "3 XP":  "Refuse to feed when feeding would solve your immediate problem.",
+          "10 XP": "Either fully embrace what you are, or find someone willing and able to cure you \u2014 and act on the choice."
+        }
+      }
+    ],
+    "stress":  { "physical": null,  "mental": null, "spiritual": "d8" },
+    "trauma":  { "physical": null,  "mental": null, "spiritual": null },
+    "plot_points": 2
+  },
+
+  "notes": "Last fed five days ago. Knows the name 'Strigoi-Voivode' but not what it means."
+}

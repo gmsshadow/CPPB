@@ -1,0 +1,78 @@
+{
+  "$schema": "cortex-character/v2",
+  "game_definition": "hammerheads",
+  "game_definition_version": "0.2.0",
+  "actor_type": "character",
+
+  "identity": {
+    "name": "Lt. Cmdr. Reyes",
+    "callsign": "Vector",
+    "concept": "Burned-out ace flying one last tour",
+    "player": "Nicholas"
+  },
+
+  "prime_sets": {
+    "distinctions": [
+      {
+        "name": "Hot-Headed Pilot",
+        "dice": ["d8"],
+        "sfx": [
+          { "name": "Reckless", "text": "Spend a Plot Point to step up Fly for one roll." }
+        ]
+      },
+      { "name": "Squadron's Conscience", "dice": ["d8"] },
+      { "name": "Haunted by Dakar",      "dice": ["d8"] }
+    ],
+
+    "attributes": [
+      { "name": "Mental",   "dice": ["d6"] },
+      { "name": "Physical", "dice": ["d8"] },
+      { "name": "Social",   "dice": ["d6"] }
+    ],
+
+    "skills": [
+      { "name": "Fight",     "dice": ["d6"] },
+      { "name": "Fly",       "dice": ["d10"],
+        "sub_traits": [{ "name": "Dogfighting", "dice": ["d8"] }] },
+      { "name": "Notice",    "dice": ["d8"] },
+      { "name": "Operate",   "dice": ["d6"] },
+      { "name": "Influence", "dice": ["d6"] },
+      { "name": "Know",      "dice": ["d8"] }
+    ],
+
+    "values": [
+      { "name": "Duty",    "dice": ["d10"], "statement": "I will not leave a wingman behind." },
+      { "name": "Glory",   "dice": ["d4"],  "statement": "Medals are for politicians." },
+      { "name": "Justice", "dice": ["d8"],  "statement": "Some orders deserve to be questioned." },
+      { "name": "Liberty", "dice": ["d6"],  "statement": "The mission first; my freedom second." },
+      { "name": "Love",    "dice": ["d6"],  "statement": "I keep them at arm's length to keep them alive." },
+      { "name": "Truth",   "dice": ["d8"],  "statement": "I owe the dead an honest accounting." }
+    ],
+
+    "signature_assets": [
+      {
+        "name": "F/A-29 'Reaper'",
+        "dice": ["d6", "d6"],
+        "description": "Personal fighter, well past spec \u2014 dual-rated for the squadron's heaviest loadouts."
+      }
+    ]
+  },
+
+  "extras": {
+    "milestones": [
+      {
+        "name": "Settling the Score",
+        "tiers": {
+          "1 XP":  "Mention the Dakar incident in a scene.",
+          "3 XP":  "Refuse an order to protect a wingman.",
+          "10 XP": "Confront the officer responsible \u2014 court-martial them, or join them."
+        }
+      }
+    ],
+    "stress":  { "physical": null, "mental": "d6", "social": null },
+    "trauma":  { "physical": null, "mental": null, "social": null },
+    "plot_points": 1
+  },
+
+  "notes": "Owes a favor to Black Sea command."
+}

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cortex-portfolio"
+description = "Generate Cortex Prime character portfolio PDFs from JSON."
+requires-python = ">=3.10"
+dependencies = [
+    "jinja2>=3.1",
+    "weasyprint>=63",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "pyinstaller>=6",
+]
+editor = [
+    "PyQt6>=6.5",
+]
+
+[project.scripts]
+cortex-portfolio = "cortex_portfolio.cli:main"
+cortex-portfolio-editor = "cortex_portfolio.editor.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cortex_portfolio.__version__" }
+
+[tool.setuptools.package-data]
+cortex_portfolio = [
+    "assets/fonts/*.woff",
+    "assets/fonts/*.woff2",
+    "assets/templates/*.html.j2",
+    "assets/templates/*.css",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
