@@ -125,6 +125,20 @@
           </div>
         {% endfor %}
 
+      {% elif sec.kind == 'complications' %}
+        {% if sec.data %}
+          {% for c in sec.data %}
+            <div class="trait">
+              <div class="trait-head">
+                <span class="trait-name">{{ c.name }}</span>
+                <span class="die-cell">{{ c.dice | dice }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="complications-blank"></div>
+        {% endif %}
+
       {% elif sec.kind == 'notes' %}
         <div class="notes"><p>{{ sec.data }}</p></div>
       {% endif %}

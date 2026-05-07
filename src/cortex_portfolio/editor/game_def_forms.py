@@ -532,6 +532,22 @@ class ExtrasForm(QWidget):
         pp_form.addRow("Starting plot points", self._pp_starting)
         outer.addWidget(pp_box)
 
+        # ----- Complications ------------------------------------------
+        comp_box = QGroupBox("Complications")
+        comp_layout = QVBoxLayout(comp_box)
+        self._comp_enabled = QCheckBox("Enable complications section")
+        self._comp_enabled.toggled.connect(self._on_comp_enabled)
+        comp_layout.addWidget(self._comp_enabled)
+        comp_info = QLabel(
+            "Step-rated traits picked up during play. When enabled, the PDF "
+            "always renders this section \u2014 reserving printable blank "
+            "space for pen-and-paper notation if no complications are recorded."
+        )
+        comp_info.setWordWrap(True)
+        comp_info.setStyleSheet("color: #666; padding-left: 18px;")
+        comp_layout.addWidget(comp_info)
+        outer.addWidget(comp_box)
+
         outer.addStretch(1)
 
     # ----------------------------------------------------------------
@@ -550,6 +566,9 @@ class ExtrasForm(QWidget):
             pp = extras.get("plot_points") or {}
             self._pp_enabled.setChecked(bool(pp.get("enabled")))
             self._pp_starting.setValue(int(pp.get("starting") or 0))
+
+            comp = extras.get("complications") or {}
+            self._comp_enabled.setChecked(bool(comp.get("enabled")))
         finally:
             self._suspend = False
 
@@ -650,4 +669,10 @@ class ExtrasForm(QWidget):
         if self._suspend or self._extras is None:
             return
         self._extras.setdefault("plot_points", {})["starting"] = val
+        self.dataChanged.emit(self._extras)
+
+    def _on_comp_enabled(self, checked: bool) -> None:
+        if self._suspend or self._extras is None:
+            return
+        self._extras.setdefault("complications", {})["enabled"] = checked
         self.dataChanged.emit(self._extras)

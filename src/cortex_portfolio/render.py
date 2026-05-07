@@ -71,23 +71,26 @@ def dice_icons(value: str | list[str] | None) -> Markup:
 
 FA_ICONS = {
     # Section / prime-set icons
-    "scroll":      "\uf70e",
-    "user":        "\uf007",
-    "user-circle": "\uf2bd",
-    "bullseye":    "\uf140",
-    "heart":       "\uf004",
-    "crosshairs":  "\uf05b",
-    "shield-alt":  "\uf3ed",
-    "medal":       "\uf5a2",
-    "coins":       "\uf51e",
-    "book-open":   "\uf518",
-    "bolt":        "\uf0e7",
-    "ban":         "\uf05e",
-    "crown":       "\uf521",
-    "skull":       "\uf54c",
-    "dragon":      "\uf6d5",
-    "hat-wizard":  "\uf6e8",
-    "hammer":      "\uf6e3",
+    "scroll":               "\uf70e",
+    "user":                 "\uf007",
+    "user-circle":          "\uf2bd",
+    "bullseye":             "\uf140",
+    "heart":                "\uf004",
+    "crosshairs":           "\uf05b",
+    "shield-alt":           "\uf3ed",
+    "medal":                "\uf5a2",
+    "coins":                "\uf51e",
+    "book-open":            "\uf518",
+    "bolt":                 "\uf0e7",
+    "ban":                  "\uf05e",
+    "crown":                "\uf521",
+    "skull":                "\uf54c",
+    "dragon":               "\uf6d5",
+    "hat-wizard":           "\uf6e8",
+    "hammer":               "\uf6e3",
+    "exclamation-triangle": "\uf071",  # Complications
+    "fire":                 "\uf06d",
+    "biohazard":            "\uf780",
 }
 
 
@@ -211,6 +214,21 @@ def build_rows(actor_type_def: dict, character: dict) -> list[list[dict]]:
             "settings": {},
             "data": char_extras["milestones"],
             "full_width": True,
+        })
+
+    # Complications: a Cortex Prime concept covering temporary step-rated
+    # traits gained mid-scene ("On Fire d8", "Outnumbered d6"). Render the
+    # section even when empty if the game definition enables it -- players
+    # often want a printable space for pen-and-paper notation.
+    comp_def = extras_def.get("complications") or {}
+    if comp_def.get("enabled"):
+        sections.append({
+            "kind": "complications",
+            "label": comp_def.get("label", "Complications"),
+            "icon": comp_def.get("icon", "exclamation-triangle"),
+            "settings": {},
+            "data": char_extras.get("complications") or [],
+            "full_width": comp_def.get("full_width", True),
         })
 
     if character.get("notes"):

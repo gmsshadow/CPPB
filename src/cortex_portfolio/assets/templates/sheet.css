@@ -244,6 +244,23 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
 .milestone .tier-value { flex: 1 1 auto; }
 
 /* --------------------------------------------------------------------------
+   Complications
+   -------------------------------------------------------------------------- */
+/* When the character has no complications recorded, the section still
+   renders -- but we leave it as printable lines players can write on with
+   pen and paper. ~80pt is roughly four blank rows on letter paper. */
+.complications-blank {
+  min-height: 80pt;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 19pt,
+    var(--rule) 19pt,
+    var(--rule) 19.5pt
+  );
+}
+
+/* --------------------------------------------------------------------------
    Notes
    -------------------------------------------------------------------------- */
 .notes p { margin: 0; }

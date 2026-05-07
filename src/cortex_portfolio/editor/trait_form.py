@@ -400,9 +400,17 @@ class TraitForm(QWidget):
         if s.get("has_label", True):
             items = self._ps_def.get("items")
             if isinstance(items, list) and items:
+                # Editable combo: dropdown for the predefined names, but
+                # the user can also type freely. The validator will surface
+                # a warning if the typed name isn't in the items list, but
+                # the editor doesn't block it -- some games want predefined
+                # names as suggestions, not constraints.
                 self._name_widget = QComboBox()
+                self._name_widget.setEditable(True)
+                self._name_widget.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
                 names = [it["name"] for it in items if isinstance(it, dict) and "name" in it]
                 self._name_widget.addItems(names)
+                self._name_widget.setPlaceholderText("Trait name (or pick from list)")
                 self._name_widget.currentTextChanged.connect(
                     lambda val: self._set_field("name", val)
                 )
@@ -505,14 +513,9 @@ class TraitForm(QWidget):
         if self._name_widget is not None:
             name = t.get("name", "")
             if isinstance(self._name_widget, QComboBox):
-                idx = self._name_widget.findText(name)
-                if idx >= 0:
-                    self._name_widget.setCurrentIndex(idx)
-                else:
-                    # Out-of-list name: keep showing it so the user can fix it
-                    if name:
-                        self._name_widget.addItem(name)
-                        self._name_widget.setCurrentText(name)
+                # Editable combobox: setEditText sets the displayed text
+                # whether or not it's in the dropdown list.
+                self._name_widget.setEditText(name)
             else:
                 self._name_widget.setText(name)
 

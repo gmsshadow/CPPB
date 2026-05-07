@@ -108,7 +108,7 @@ The simplest way:
 
    You should see version info including a `Pango version:` line.
 
-### Building
+### Building the CLI
 
 From a fresh checkout, in PowerShell:
 
@@ -130,6 +130,32 @@ Output is `dist\cortex-portfolio.exe`. Test with:
 The executable is around 50–80 MB — Python runtime, WeasyPrint, GTK, and
 all dependencies bundled in. The resulting `.exe` is self-contained;
 end users do **not** need GTK installed to run it.
+
+### Building the editor
+
+The editor's bundle is a separate spec because it adds PyQt6 (the GUI
+toolkit) on top of everything the CLI bundles. The build needs the
+`editor` extra installed:
+
+```powershell
+pip install -e ".[dev,editor]"            # NOT just [dev] -- see below
+pyinstaller cortex-portfolio-editor.spec --clean
+```
+
+Output is `dist\cortex-portfolio-editor.exe`, around 130–160 MB. Test with:
+
+```powershell
+.\dist\cortex-portfolio-editor.exe
+```
+
+The editor window should appear with no console window alongside it.
+
+> ⚠️ **The `[editor]` extra is required for the build, not just for running
+> from source.** PyInstaller only bundles what's importable in *its*
+> environment. If you build the editor spec without PyQt6 installed, the
+> .exe will be smaller (no Qt runtime included) but will crash at launch
+> with `ModuleNotFoundError: No module named 'PyQt6'`. See the
+> Troubleshooting section below.
 
 ### Note about console output
 
@@ -164,6 +190,78 @@ Game definitions reference Font Awesome icons by name (`"icon": "scroll"`).
 To use a new icon, add the codepoint to `FA_ICONS` in `render.py`.
 Codepoints are listed in the official cheatsheet at
 fontawesome.com/v5/cheatsheet/free/solid.
+
+## Troubleshooting
+
+### `OSError: cannot load library 'libgobject-2.0-0'` on Windows
+
+WeasyPrint can't find GTK. Install the GTK3 runtime
+(see "Build a Windows executable" → "Prerequisite: install GTK runtime")
+and reopen PowerShell so the new PATH applies. Verify with
+`python -m weasyprint --info` — you should see a `Pango version:` line.
+
+### Editor `.exe` crashes with `ModuleNotFoundError: No module named 'PyQt6'`
+
+The build environment didn't have PyQt6 installed. PyInstaller can only
+bundle what's importable in its own venv, so building the editor spec
+with only `pip install -e ".[dev]"` produces a bundle with no Qt runtime
+inside.
+
+Fix:
+
+```powershell
+pip install -e ".[dev,editor]"
+pyinstaller cortex-portfolio-editor.spec --clean
+```
+
+You can verify before rebuilding that the venv has the right packages:
+
+```powershell
+pip show PyQt6
+```
+
+If the path it prints is *not* under your project's `venv\` directory,
+you're picking up a system Python install — re-activate your venv with
+`venv\Scripts\Activate.ps1` and reinstall.
+
+The same lesson generalizes: **if `python -m cortex_portfolio.editor`
+works from source but the bundled .exe fails with `ModuleNotFoundError`,
+suspect a missing extra in the install used for the build.**
+
+### GLib-GIO-WARNING lines on startup
+
+These come from GLib enumerating Windows app file associations during
+its initialization. They're cosmetic. Inside the project's CLI and
+editor entry points we already set `GIO_USE_VFS=local` to silence them,
+but they may still appear if you run WeasyPrint or PyQt6 directly
+outside this project's wrappers.
+
+### Editor window doesn't appear (no error, no window)
+
+Most likely: PyQt6's Windows platform plugin (`qwindows.dll`) wasn't
+bundled by PyInstaller's hook. Run from PowerShell rather than
+double-clicking — Qt prints a useful error to stdout in this case
+("This application failed to start because no Qt platform plugin
+could be initialized"). If you see that, try rebuilding with an
+explicit collect-all in the spec:
+
+In `cortex-portfolio-editor.spec`, change:
+
+```python
+hiddenimports = collect_submodules("weasyprint")
+```
+
+to:
+
+```python
+from PyInstaller.utils.hooks import collect_all
+hiddenimports = collect_submodules("weasyprint")
+qt_datas, qt_binaries, qt_hiddenimports = collect_all("PyQt6")
+datas += qt_datas
+hiddenimports += qt_hiddenimports
+```
+
+and add `qt_binaries` to the `binaries=[]` argument of `Analysis(...)`.
 
 ## Project layout
 

@@ -77,12 +77,70 @@ class SectionList(QListWidget):
             label = f"Milestones    ({n})" if n else "Milestones    (empty)"
             self._add_item(label, "milestones", "", dim=n == 0)
 
+        if extras_def.get("complications", {}).get("enabled"):
+            n = len(char_extras.get("complications") or [])
+            label = f"Complications    ({n})" if n else "Complications    (empty)"
+            self._add_item(label, "complications", "", dim=n == 0)
+
         # Notes is always available -- it's just free text.
         self._add_item("Notes", "notes", "", dim=not character.get("notes"))
 
         # Default selection: Identity.
         if self.count() > 0:
             self.setCurrentRow(0)
+
+    # ------------------------------------------------------------------
+    def update_counts(self, actor_type_def: dict, character: dict) -> None:
+        """Refresh entry counts and dim states without rebuilding the list.
+
+        Called from the main window on every edit. Critical that this
+        does NOT touch selection or fire any signals -- otherwise the
+        focus on the field the user is currently typing into gets reset
+        to position 0 (which makes QPlainTextEdit type backwards) or
+        lost entirely (the "bouncing cursor" symptom on QLineEdit).
+        """
+        char_prime_sets = character.get("prime_sets") or {}
+        char_extras = character.get("extras") or {}
+
+        for row in range(self.count()):
+            item = self.item(row)
+            kind = item.data(KIND_ROLE)
+            id_ = item.data(ID_ROLE) or ""
+
+            if kind == "prime_set":
+                ps_def = next(
+                    (ps for ps in actor_type_def.get("prime_sets", [])
+                     if ps.get("id") == id_),
+                    None,
+                )
+                if ps_def is None:
+                    continue
+                label = ps_def.get("label", id_) or id_
+                count = len(char_prime_sets.get(id_) or [])
+                item.setText(f"{label}    ({count})" if count else f"{label}    (empty)")
+                item.setForeground(
+                    Qt.GlobalColor.gray if count == 0 else self.palette().windowText()
+                )
+
+            elif kind == "milestones":
+                n = len(char_extras.get("milestones") or [])
+                item.setText(f"Milestones    ({n})" if n else "Milestones    (empty)")
+                item.setForeground(
+                    Qt.GlobalColor.gray if n == 0 else self.palette().windowText()
+                )
+
+            elif kind == "complications":
+                n = len(char_extras.get("complications") or [])
+                item.setText(f"Complications    ({n})" if n else "Complications    (empty)")
+                item.setForeground(
+                    Qt.GlobalColor.gray if n == 0 else self.palette().windowText()
+                )
+
+            elif kind == "notes":
+                has_notes = bool(character.get("notes"))
+                item.setForeground(
+                    self.palette().windowText() if has_notes else Qt.GlobalColor.gray
+                )
 
     # ------------------------------------------------------------------
     def _add_item(self, label: str, kind: str, id_: str, *, dim: bool = False) -> None:

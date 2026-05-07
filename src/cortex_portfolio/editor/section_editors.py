@@ -55,7 +55,6 @@ class IdentityEditor(QWidget):
 
     _FIELDS = [
         ("name",     "Name"),
-        ("callsign", "Callsign"),
         ("concept",  "Concept"),
         ("player",   "Player"),
     ]
@@ -478,3 +477,113 @@ class NotesEditor(QWidget):
     def _on_pp_change(self, value: int) -> None:
         self._character.setdefault("extras", {})["plot_points"] = value
         self.dataChanged.emit(self._character)
+
+
+# ===========================================================================
+# Complications
+# ===========================================================================
+
+class ComplicationsEditor(QWidget):
+    """Edit the list of complications on a character.
+
+    A complication is just {name, dice} -- a step-rated trait the character
+    has picked up during play. Add / remove / edit, with no sub-traits or
+    SFX (those would be a Power Set, not a complication).
+    """
+    dataChanged = pyqtSignal(dict)
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self._character: dict = {}
+
+        outer = QVBoxLayout(self)
+        head = QHBoxLayout()
+        head.addWidget(QLabel("<h3>Complications</h3>"))
+        head.addStretch(1)
+        add = QPushButton("+ Add Complication")
+        add.clicked.connect(self._on_add)
+        head.addWidget(add)
+        outer.addLayout(head)
+
+        info = QLabel(
+            "Step-rated traits the character has picked up during play "
+            "(\"On Fire d8\", \"Outnumbered d6\"). The PDF reserves printable "
+            "blank space if the list is empty, so players can record extras "
+            "with pen and paper."
+        )
+        info.setWordWrap(True)
+        info.setStyleSheet("color: #666; padding: 4px 0 8px 0;")
+        outer.addWidget(info)
+
+        self._inner = QWidget()
+        self._inner_layout = QVBoxLayout(self._inner)
+        self._inner_layout.setContentsMargins(0, 0, 0, 0)
+        self._inner_layout.addStretch(1)
+        outer.addWidget(_scroll_wrap(self._inner), 1)
+
+        self._frames: list[QFrame] = []
+
+    def set_character(self, character: dict) -> None:
+        self._character = character
+        self._rebuild()
+
+    def _list(self) -> list[dict]:
+        return self._character.setdefault("extras", {}).setdefault("complications", [])
+
+    def _rebuild(self) -> None:
+        for f in self._frames:
+            f.deleteLater()
+        self._frames = []
+        for i, _c in enumerate(self._list()):
+            frame = self._make_row(i)
+            self._frames.append(frame)
+            self._inner_layout.insertWidget(self._inner_layout.count() - 1, frame)
+
+    def _make_row(self, index: int) -> QFrame:
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.StyledPanel)
+        h = QHBoxLayout(frame)
+        h.setContentsMargins(6, 4, 6, 4)
+        h.setSpacing(6)
+
+        c = self._list()[index]
+
+        name = QLineEdit(c.get("name", ""))
+        name.setPlaceholderText("Complication name (e.g. On Fire, Outnumbered)")
+        name.textChanged.connect(lambda v, i=index: self._update(i, "name", v))
+        h.addWidget(name, 1)
+
+        die = QComboBox()
+        die.addItems(["d4", "d6", "d8", "d10", "d12"])
+        current = (c.get("dice") or ["d6"])[0] if c.get("dice") else "d6"
+        idx = die.findText(current)
+        die.setCurrentIndex(idx if idx >= 0 else 1)
+        die.currentTextChanged.connect(
+            lambda v, i=index: self._update(i, "dice", [v])
+        )
+        h.addWidget(die)
+
+        rm = QPushButton("\u2715")
+        rm.setFixedWidth(24)
+        rm.setToolTip("Remove")
+        rm.clicked.connect(lambda _c, i=index: self._remove(i))
+        h.addWidget(rm)
+        return frame
+
+    def _on_add(self) -> None:
+        self._list().append({"name": "", "dice": ["d6"]})
+        self._rebuild()
+        self.dataChanged.emit(self._character)
+
+    def _remove(self, index: int) -> None:
+        items = self._list()
+        if 0 <= index < len(items):
+            del items[index]
+            self._rebuild()
+            self.dataChanged.emit(self._character)
+
+    def _update(self, index: int, field: str, value) -> None:
+        items = self._list()
+        if 0 <= index < len(items):
+            items[index][field] = value
+            self.dataChanged.emit(self._character)

@@ -35,6 +35,7 @@ from ..render import render_pdf, resolve_actor_type
 from ..validate import validate, split
 from .issues_panel import IssuesPanel
 from .section_editors import (
+    ComplicationsEditor,
     IdentityEditor,
     MilestonesEditor,
     NotesEditor,
@@ -388,6 +389,8 @@ class MainWindow(QMainWindow):
             editor = StressEditor(stress_def)
         elif kind == "milestones":
             editor = MilestonesEditor()
+        elif kind == "complications":
+            editor = ComplicationsEditor()
         elif kind == "notes":
             editor = NotesEditor()
         else:
@@ -402,15 +405,13 @@ class MainWindow(QMainWindow):
         self._dirty = True
         self._update_window_title()
 
-        # If the section's count changed, refresh the left pane (preserving
-        # the current selection).
-        current = self._section_list.currentItem()
-        kind = current.data(Qt.ItemDataRole.UserRole + 1) if current else None
-        id_ = current.data(Qt.ItemDataRole.UserRole + 2) if current else None
-        self._section_list.populate(self._actor_type or {}, character)
-        if kind:
-            self._section_list.select(kind, id_ or "")
-
+        # IMPORTANT: do NOT rebuild the section list here. populate() calls
+        # clear() + setCurrentRow(0), which steals focus from whatever input
+        # the user is typing into. That made QLineEdit "bounce" the cursor
+        # out (and QPlainTextEdit type backwards because the cursor was
+        # reset to position 0 between keystrokes). Instead, just refresh
+        # the count labels in place.
+        self._section_list.update_counts(self._actor_type or {}, character)
         self._schedule_validate()
 
     def _on_issue_clicked(self, kind: str, id_: str) -> None:
