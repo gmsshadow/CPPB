@@ -7,6 +7,16 @@ Usage:
 """
 from __future__ import annotations
 
+# Silence the GLib-GIO warnings WeasyPrint's GTK runtime emits on Windows
+# during startup (it enumerates UWP app file associations, which on modern
+# Windows 11 produces dozens of "supports N extensions but has no verbs"
+# messages). These must be set before WeasyPrint imports anything from the
+# GTK stack -- so they belong at the very top of this module, ahead of the
+# render import below.
+import os as _os
+_os.environ.setdefault("GIO_USE_VFS", "local")
+_os.environ.setdefault("G_MESSAGES_DEBUG", "")
+
 import argparse
 import json
 import sys

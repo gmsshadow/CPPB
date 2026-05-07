@@ -85,7 +85,32 @@ A PyInstaller spec is included that bundles fonts, templates, WeasyPrint,
 and the Python runtime into a single `.exe` you can hand to a friend who
 has no Python installed.
 
-On Windows (PowerShell), from a fresh checkout:
+### Prerequisite: install GTK runtime
+
+WeasyPrint on Windows depends on the GTK runtime libraries (Pango, Cairo,
+GLib). They're not bundled with WeasyPrint itself; you need to install
+them once on the build machine. PyInstaller then packs them into the
+resulting `.exe`, so end users of the bundle don't need GTK themselves.
+
+The simplest way:
+
+1. Download the latest `gtk3-runtime-*-ts-win64.exe` from
+   https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
+2. Run the installer. **Keep "Set up PATH environment variable to include
+   GTK+" enabled.** Default install location is
+   `C:\Program Files\GTK3-Runtime Win64\` — the PyInstaller spec already
+   knows to look there.
+3. Open a fresh PowerShell so the new PATH applies, then verify:
+
+   ```powershell
+   python -m weasyprint --info
+   ```
+
+   You should see version info including a `Pango version:` line.
+
+### Building
+
+From a fresh checkout, in PowerShell:
 
 ```powershell
 python -m venv venv
@@ -94,7 +119,7 @@ pip install -e ".[dev]"
 pyinstaller cortex-portfolio.spec --clean
 ```
 
-The output is `dist\cortex-portfolio.exe`. Test it with:
+Output is `dist\cortex-portfolio.exe`. Test with:
 
 ```powershell
 .\dist\cortex-portfolio.exe examples\hammerheads.game.json `
@@ -102,15 +127,17 @@ The output is `dist\cortex-portfolio.exe`. Test it with:
                             out\reyes.pdf
 ```
 
-The executable is around 50 MB — that's the Python runtime and WeasyPrint's
-dependencies bundled in. The build process is the same on Linux/macOS, just
-with `./dist/cortex-portfolio` and forward slashes.
+The executable is around 50–80 MB — Python runtime, WeasyPrint, GTK, and
+all dependencies bundled in. The resulting `.exe` is self-contained;
+end users do **not** need GTK installed to run it.
 
-### WeasyPrint on Windows
+### Note about console output
 
-WeasyPrint 53+ does **not** require GTK to be installed on Windows; the
-necessary libraries ship inside the wheel. If you see GTK-related errors
-during `pip install`, you're on a very old release — upgrade.
+The bundled .exe (and `python -m weasyprint --info`) emits a few
+`GLib-GIO-WARNING` lines on first startup as GLib enumerates Windows app
+file associations. These are cosmetic and silenced inside the program by
+`cli.py` setting `GIO_USE_VFS=local` — but if you run WeasyPrint
+directly outside this project's CLI, you'll see them.
 
 ## Adding a new game preset
 
