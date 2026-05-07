@@ -108,6 +108,18 @@ class MainWindow(QMainWindow):
         act_save_as.triggered.connect(self._on_save_as)
         file_menu.addAction(act_save_as)
 
+        # ----- Game Definition menu (opens its own window) -----
+        gd_menu = bar.addMenu("&Game Definition")
+
+        act_gd_new = QAction("&New Game Definition\u2026", self)
+        act_gd_new.triggered.connect(lambda: self._open_gd_window(action="new"))
+        gd_menu.addAction(act_gd_new)
+
+        act_gd_open = QAction("&Open Game Definition for Editing\u2026", self)
+        act_gd_open.triggered.connect(lambda: self._open_gd_window(action="open"))
+        gd_menu.addAction(act_gd_open)
+
+        # ----- Render menu -----
         render_menu = bar.addMenu("&Render")
         act_render = QAction("Render to &PDF\u2026", self)
         act_render.setShortcut(QKeySequence("Ctrl+R"))
@@ -145,6 +157,22 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(2, 0)
         splitter.setSizes([220, 900, 380])
         self.setCentralWidget(splitter)
+
+    # ==================================================================
+    # Game-definition editor (opens in its own window)
+    # ==================================================================
+    def _open_gd_window(self, *, action: str = "new") -> None:
+        from .game_def_window import GameDefWindow
+        # Keep a reference so the window isn't GC'd. A fresh window each time
+        # is fine for now; users can close them when done.
+        if not hasattr(self, "_gd_windows"):
+            self._gd_windows: list[GameDefWindow] = []
+        win = GameDefWindow()
+        self._gd_windows.append(win)
+        win.show()
+        if action == "open":
+            # Trigger the open dialog after the window is up.
+            QTimer.singleShot(0, win._on_open)
 
     # ==================================================================
     # File operations
