@@ -1,0 +1,243 @@
+{
+  "id": "xadia",
+  "name": "Tales of Xadia",
+  "version": "0.1.0",
+  "dice_pool": [
+    "d4",
+    "d6",
+    "d8",
+    "d10",
+    "d12"
+  ],
+  "actor_types": {
+    "character": {
+      "label": "Character",
+      "prime_sets": [
+        {
+          "id": "Distinctions",
+          "label": "Distinctions",
+          "icon": "scroll",
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_sfx": true
+          },
+          "dice": [
+            "d8"
+          ],
+          "default_dice": [
+            "d8"
+          ],
+          "items": [
+            {
+              "name": "Kindred"
+            },
+            {
+              "name": "Vocation"
+            },
+            {
+              "name": "Quirk"
+            }
+          ]
+        },
+        {
+          "id": "Attributes",
+          "label": "Attributes",
+          "icon": "scroll",
+          "settings": {
+            "has_label": true,
+            "has_dice": true
+          },
+          "items": [
+            {
+              "name": "Agility"
+            },
+            {
+              "name": "Awareness"
+            },
+            {
+              "name": "Influence"
+            },
+            {
+              "name": "Intellect"
+            },
+            {
+              "name": "Spirit"
+            },
+            {
+              "name": "Strength"
+            }
+          ],
+          "dice": [
+            "d4",
+            "d6",
+            "d8",
+            "d10",
+            "d12"
+          ],
+          "default_dice": [
+            "d6"
+          ]
+        },
+        {
+          "id": "Values",
+          "label": "Values",
+          "icon": "scroll",
+          "settings": {
+            "has_label": true,
+            "has_dice": true,
+            "has_statement": true,
+            "has_limits": false
+          },
+          "dice": [
+            "d4",
+            "d6",
+            "d8",
+            "d10",
+            "d12"
+          ],
+          "default_dice": [
+            "d6"
+          ],
+          "items": [
+            {
+              "name": "Devotion"
+            },
+            {
+              "name": "Glory"
+            },
+            {
+              "name": "Justice"
+            },
+            {
+              "name": "Liberty"
+            },
+            {
+              "name": "Mastery"
+            },
+            {
+              "name": "Truth"
+            }
+          ]
+        },
+        {
+          "id": "Specialities",
+          "label": "Specialities",
+          "icon": "scroll",
+          "settings": {
+            "has_label": true,
+            "has_dice": true
+          },
+          "dice": [
+            "d4",
+            "d6",
+            "d8",
+            "d10",
+            "d12"
+          ],
+          "default_dice": [
+            "d6"
+          ]
+        },
+        {
+          "id": "Assets",
+          "label": "Assets",
+          "icon": "scroll",
+          "settings": {
+            "has_label": true,
+            "has_dice": true
+          },
+          "dice": [
+            "d4",
+            "d6",
+            "d8",
+            "d10",
+            "d12"
+          ],
+          "default_dice": [
+            "d6"
+          ]
+        },
+        {
+          "id": "Relationships",
+          "label": "Relationships",
+          "icon": "scroll",
+          "settings": {
+            "has_label": true,
+            "has_dice": true
+          },
+          "dice": [
+            "d4",
+            "d6",
+            "d8",
+            "d10",
+            "d12"
+          ],
+          "default_dice": [
+            "d6"
+          ]
+        },
+        {
+          "id": "Goals",
+          "label": "Goals",
+          "icon": "scroll",
+          "settings": {
+            "has_label": true,
+            "has_dice": true
+          },
+          "dice": [
+            "d4",
+            "d6",
+            "d8",
+            "d10",
+            "d12"
+          ],
+          "default_dice": [
+            "d6"
+          ]
+        }
+      ],
+      "extras": {
+        "milestones": {
+          "enabled": false,
+          "icon": "medal"
+        },
+        "stress": {
+          "enabled": true,
+          "tracks": [
+            {
+              "id": "afraid",
+              "label": "Afraid"
+            },
+            {
+              "id": "angry",
+              "label": "Angry"
+            },
+            {
+              "id": "corrupted",
+              "label": "Corrupted"
+            },
+            {
+              "id": "exhuasted",
+              "label": "Exhuasted"
+            },
+            {
+              "id": "injured",
+              "label": "Injured"
+            },
+            {
+              "id": "insecure",
+              "label": "Insecure"
+            }
+          ],
+          "trauma_enabled": true
+        },
+        "plot_points": {
+          "enabled": true,
+          "starting": 1,
+          "icon": "coins"
+        }
+      }
+    }
+  }
+}

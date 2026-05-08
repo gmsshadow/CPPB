@@ -190,14 +190,20 @@ class TestCharacterValidation:
             for w in warns
         )
 
-    def test_predefined_item_drift_is_warning(
+    def test_predefined_items_are_suggestions_not_constraints(
         self, hammerheads_game, reyes_character
     ):
-        # Hammerheads attributes are Mental/Physical/Social. "Charisma" is not.
+        # Hammerheads attributes have a predefined items list (Mental,
+        # Physical, Social). The editor lets users type their own names
+        # over those defaults, so the validator deliberately does NOT
+        # warn when a name doesn't match the predefined list -- the items
+        # list is a dropdown of suggestions, not a constraint.
         ch = copy.deepcopy(reyes_character)
         ch["prime_sets"]["attributes"][0]["name"] = "Charisma"
-        _, warns = split(validate(hammerheads_game, ch))
-        assert any("Charisma" in w.message for w in warns)
+        errs, warns = split(validate(hammerheads_game, ch))
+        assert errs == []
+        assert not any("Charisma" in w.message for w in warns), \
+            "Custom names over predefined items should not trigger warnings"
 
     def test_game_definition_id_mismatch_is_warning(
         self, hammerheads_game, reyes_character

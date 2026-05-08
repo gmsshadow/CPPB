@@ -178,7 +178,20 @@
 
   <main>
     {% for row in rows %}
-      <div class="row{% if row|length == 2 %} row--pair{% else %} row--full{% endif %}">
+      {#- Three row shapes:
+          - row--pair: two half-width sections side by side
+          - row--full: a single section that wants full page width
+          - row--lonely: a half-width section that ended up alone in its
+                         row (renders in the left column with empty space
+                         on the right, preserving the two-column visual)
+      -#}
+      {% if row|length == 2 %}
+        <div class="row row--pair">
+      {% elif row[0].full_width %}
+        <div class="row row--full">
+      {% else %}
+        <div class="row row--lonely">
+      {% endif %}
         {% for sec in row %}{{ render_section(sec) }}{% endfor %}
       </div>
     {% endfor %}

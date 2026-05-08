@@ -140,21 +140,41 @@ def resolve_actor_type(game_def: dict, actor_type_id: str | None) -> dict:
 # WeasyPrint page-break between them cleanly.
 # ---------------------------------------------------------------------------
 
-# Heuristic: a prime set goes full-width if it has more than this many entries
-# OR if any entry has sub-traits (because sub-traits add vertical bulk).
-_FULL_WIDTH_TRAIT_THRESHOLD = 4
-
-
 def _is_wide_prime_set(prime_set_def: dict, entries: list[dict]) -> bool:
-    if len(entries) > _FULL_WIDTH_TRAIT_THRESHOLD:
+    """Decide if a prime set should occupy the full page width.
+
+    The default leans towards half-width so sections pair into a two-column
+    layout, which is the canonical Cortex sheet feel and uses page space
+    more efficiently. We only force full-width when content genuinely
+    needs the room:
+
+    - Explicit override: `prime_set.full_width: true` in the game definition
+      (or `settings.full_width: true`). This is the escape hatch for game-
+      def authors who want a particular section wide.
+    - Sub-traits with actual nested entries: stat-block + indented
+      sub-trait list reads better with horizontal room.
+
+    Long entry lists (Attributes with six rows) and statements (Values'
+    quoted lines) work fine in narrower half-width columns -- text wraps
+    naturally and the column just gets taller. Earlier versions of this
+    heuristic forced both to full-width, which produced sheets with lots
+    of unused real estate on the right. If you really want one of those
+    full-width, use the explicit override.
+    """
+    # Explicit override wins over heuristics. Authors who want a section
+    # wide can set `"full_width": true` on the prime set itself, or inside
+    # its `settings` block (either spelling works).
+    settings = prime_set_def.get("settings") or {}
+    if prime_set_def.get("full_width") is True or settings.get("full_width") is True:
         return True
-    settings = prime_set_def.get("settings", {})
+    if prime_set_def.get("full_width") is False or settings.get("full_width") is False:
+        return False
+
+    # Sub-traits with actual nested entries genuinely need the width.
     if settings.get("has_sub_traits"):
         if any(e.get("sub_traits") for e in entries):
             return True
-    # Statements (Cortex Values) wrap to multi-line text; give them width.
-    if settings.get("has_statement"):
-        return True
+
     return False
 
 

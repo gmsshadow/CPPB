@@ -1,0 +1,171 @@
+{
+  "game_definition": "xadia",
+  "actor_type": "character",
+  "identity": {
+    "name": "Timba",
+    "concept": "Dark Healer",
+    "player": "Nicholas"
+  },
+  "prime_sets": {
+    "Distinctions": [
+      {
+        "name": "Katolian City Folk",
+        "dice": [
+          "d8"
+        ],
+        "sfx": [
+          {
+            "name": "Hinder",
+            "text": "Gain a PP when you switch out an 8 for a 4"
+          }
+        ]
+      },
+      {
+        "name": "Dark Healer",
+        "dice": [
+          "d8"
+        ],
+        "sfx": [
+          {
+            "name": "Hinder",
+            "text": "Gain a PP when you switch out an 8 for a 4"
+          },
+          {
+            "name": "Healing Hands",
+            "text": "When you spend a recovery scene healing others, step down their Exhausted or Injured stress an additional time."
+          },
+          {
+            "name": "Price of Darkness",
+            "text": "When you use a Magical Creature asset in any dice pool with your Dark Magic speciality, step up or double your Dark Magic. Convert that asset into Coorupted stress after the roll."
+          }
+        ]
+      },
+      {
+        "name": "Focused Resolve",
+        "dice": [
+          "d8"
+        ],
+        "sfx": [
+          {
+            "name": "Hinder",
+            "text": "Gain a PP when you switch out an 8 for a 4"
+          }
+        ]
+      }
+    ],
+    "Attributes": [
+      {
+        "name": "Agility",
+        "dice": [
+          "d8"
+        ]
+      },
+      {
+        "name": "Awareness",
+        "dice": [
+          "d8"
+        ]
+      },
+      {
+        "name": "Influence",
+        "dice": [
+          "d10"
+        ]
+      },
+      {
+        "name": "Intellect",
+        "dice": [
+          "d8"
+        ]
+      },
+      {
+        "name": "Spirit",
+        "dice": [
+          "d6"
+        ]
+      },
+      {
+        "name": "Strength",
+        "dice": [
+          "d6"
+        ]
+      }
+    ],
+    "Values": [
+      {
+        "name": "Devotion",
+        "dice": [
+          "d6"
+        ],
+        "statement": "Though love is important, I will not let sappiness blind me"
+      },
+      {
+        "name": "Glory",
+        "dice": [
+          "d6"
+        ],
+        "statement": "I enjoy a good argument, but otherwise I'm laid back"
+      },
+      {
+        "name": "Justice",
+        "dice": [
+          "d6"
+        ],
+        "statement": "I know what history does to villains"
+      },
+      {
+        "name": "Liberty",
+        "dice": [
+          "d6"
+        ],
+        "statement": "I follow a destiny that speaks louder than I"
+      },
+      {
+        "name": "Mastery",
+        "dice": [
+          "d12"
+        ],
+        "statement": "I spent years perfecting my skills; I'm just about survial these days"
+      },
+      {
+        "name": "Truth",
+        "dice": [
+          "d6"
+        ],
+        "statement": "My actions speak louder than empty promises"
+      }
+    ],
+    "Specialities": [
+      {
+        "name": "Unarmed Combat",
+        "dice": [
+          "d6"
+        ]
+      },
+      {
+        "name": "Sword Play",
+        "dice": [
+          "d6"
+        ]
+      },
+      {
+        "name": "Dark Magic",
+        "dice": [
+          "d8"
+        ]
+      }
+    ],
+    "Assets": [
+      {
+        "name": "Dark Magic Spells",
+        "dice": [
+          "d8"
+        ]
+      }
+    ]
+  },
+  "extras": {
+    "plot_points": 2
+  },
+  "notes": "This is an example character for now."
+}

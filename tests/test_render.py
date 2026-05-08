@@ -130,15 +130,37 @@ class TestBuildRows:
         skills_row = next(r for r in rows if any(s["label"] == "Skills" for s in r))
         assert len(skills_row) == 1
 
-    def test_values_are_full_width_due_to_statements(
+    def test_values_default_to_half_width(
         self, hammerheads_game, reyes_character
     ):
-        # has_statement triggers full-width, even with a small number of
-        # entries, because statement text wraps to multiple lines.
+        # Values used to be forced full-width because has_statement was true.
+        # The newer heuristic lets statements wrap inside narrower columns,
+        # so Values now sits half-width by default and pairs with whatever
+        # comes next.
         at = resolve_actor_type(hammerheads_game, "character")
         rows = build_rows(at, reyes_character)
-        values_row = next(r for r in rows if any(s["label"] == "Values" for s in r))
-        assert len(values_row) == 1
+        values_section = next(
+            sec for row in rows for sec in row if sec["label"] == "Values"
+        )
+        assert values_section["full_width"] is False
+
+    def test_explicit_full_width_override_is_respected(
+        self, hammerheads_game, reyes_character
+    ):
+        # Game-def authors can force a section wide via `full_width: true`
+        # on the prime set itself. Verify the override takes precedence
+        # over the default heuristic.
+        at = resolve_actor_type(hammerheads_game, "character")
+        # Mutate locally; don't touch the fixture data on disk.
+        for ps in at["prime_sets"]:
+            if ps["id"] == "values":
+                ps["full_width"] = True
+                break
+        rows = build_rows(at, reyes_character)
+        values_section = next(
+            sec for row in rows for sec in row if sec["label"] == "Values"
+        )
+        assert values_section["full_width"] is True
 
     def test_power_set_with_subtraits_is_full_width(
         self, vigilant_game, harker_character

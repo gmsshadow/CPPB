@@ -120,6 +120,25 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
   display: block;
 }
 
+/* Half-width section with no partner. Render it in the left column only
+   (with a phantom empty right column) so the page keeps a consistent
+   two-column visual rhythm. The right column is reserved by an empty
+   pseudo-element with the same flex sizing as a real section. */
+.row--lonely {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--col-gap);
+}
+.row--lonely > .sec {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.row--lonely::after {
+  content: "";
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .sec {
   break-inside: avoid;
 }

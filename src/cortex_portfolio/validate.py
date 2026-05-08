@@ -349,11 +349,11 @@ def _check_prime_set_entries(
             ctx.warn(p, f"has {len(entries)} entries; maximum is {cmax}")
 
     items = ps_def.get("items")
-    valid_item_names: set[str] | None = None
-    if isinstance(items, list):
-        valid_item_names = {
-            it["name"] for it in items if isinstance(it, dict) and "name" in it
-        }
+    # NOTE: we no longer warn on names that aren't in `items`. The editor
+    # treats predefined items as suggestions (a dropdown of common picks)
+    # rather than constraints; players can type any name they want. The
+    # `items` list still drives the editor's dropdown population, but
+    # whether a typed name is "valid" is the game's call, not ours.
 
     seen_names: set[str] = set()
     allowed_dice = set(ps_def.get("dice") or settings.get("dice") or gd.get("dice_pool") or [])
@@ -379,12 +379,6 @@ def _check_prime_set_entries(
             if name in seen_names:
                 ctx.warn(f"{ep}.name", f"duplicate trait name {name!r}")
             seen_names.add(name)
-            if valid_item_names is not None and name not in valid_item_names:
-                ctx.warn(
-                    f"{ep}.name",
-                    f"{name!r} is not in the prime set's defined items "
-                    f"{sorted(valid_item_names)}",
-                )
 
         # Dice
         _check_dice_field(

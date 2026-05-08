@@ -228,6 +228,44 @@ class GameDefWindow(QMainWindow):
         target = select or ("game",)
         self._select_payload(target)
 
+    def _update_tree_labels(self) -> None:
+        """Refresh tree node labels in place without rebuilding the tree.
+
+        Called from _on_data_changed on every keystroke. Critical that this
+        does NOT call clear() or setCurrentItem() -- both reset focus on
+        whatever input the user is typing in, causing the bouncing-cursor
+        / backwards-typing bugs we hit in the character editor too.
+
+        Only labels are updated; id changes don't propagate (the tree's
+        payload tuples are keyed by id, and we'd need to rewire them on
+        every keystroke otherwise). On save+reopen everything resyncs,
+        which is the intended UX for renames.
+        """
+        actor_types = self._game.get("actor_types") or {}
+        for item in self._iter_items():
+            payload = item.data(0, PAYLOAD_ROLE)
+            if not payload:
+                continue
+            kind = payload[0]
+
+            if kind == "actor_type":
+                at_id = payload[1]
+                at_def = actor_types.get(at_id) or {}
+                label = at_def.get("label", at_id)
+                item.setText(0, f"{label}   ({at_id})")
+
+            elif kind == "prime_set":
+                at_id, ps_id = payload[1], payload[2]
+                at_def = actor_types.get(at_id) or {}
+                ps = next(
+                    (p for p in (at_def.get("prime_sets") or [])
+                     if p.get("id") == ps_id),
+                    None,
+                )
+                if ps is not None:
+                    item.setText(0, ps.get("label", ps_id) or ps_id)
+            # game / prime_sets group / extras nodes have static labels.
+
     def _select_payload(self, payload: tuple) -> None:
         for item in self._iter_items():
             if item.data(0, PAYLOAD_ROLE) == payload:
@@ -337,11 +375,14 @@ class GameDefWindow(QMainWindow):
         self._dirty = True
         self._update_window_title()
 
-        # If a label or id changed, the tree might need to redraw.
+        # IMPORTANT: do NOT call _refresh_tree() here. That clears the tree
+        # and re-selects, which steals focus from the input the user is
+        # typing in (causes the bouncing-cursor / backwards-typing bugs we
+        # already hit in the character editor's main_window). _update_tree_
+        # labels updates label text in place without touching selection.
         kind = payload[0]
         if kind in ("actor_type", "prime_set", "game"):
-            current_payload = self._tree.currentItem().data(0, PAYLOAD_ROLE) if self._tree.currentItem() else None
-            self._refresh_tree(select=current_payload)
+            self._update_tree_labels()
 
         self._schedule_validate()
 
