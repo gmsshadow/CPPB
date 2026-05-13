@@ -45,7 +45,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=["_pyinstaller_rthook_silence_glib.py"],
     excludes=[
         "tkinter",         # not used; saves a few MB
         "pytest",

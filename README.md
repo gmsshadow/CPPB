@@ -284,10 +284,18 @@ suspect a missing extra in the install used for the build.**
 ### GLib-GIO-WARNING lines on startup
 
 These come from GLib enumerating Windows app file associations during
-its initialization. They're cosmetic. Inside the project's CLI and
-editor entry points we already set `GIO_USE_VFS=local` to silence them,
-but they may still appear if you run WeasyPrint or PyQt6 directly
-outside this project's wrappers.
+its initialization. They're cosmetic and never indicate a real problem.
+
+The PyInstaller spec files wire in a runtime hook
+(`_pyinstaller_rthook_silence_glib.py`) that sets `GIO_USE_VFS=local`
+and `G_MESSAGES_DEBUG=""` before any bundled DLL loads — that suppresses
+the warnings in the bundled `.exe`. If you still see them after a build,
+confirm the spec's `runtime_hooks=[...]` argument references the hook
+file and rebuild with `--clean`.
+
+When running from source (`python -m cortex_portfolio.editor`), the
+same env vars get set at the top of `cli.py` / `editor/__main__.py`,
+which is good enough for the non-bundled case.
 
 ### Editor window doesn't appear (no error, no window)
 
