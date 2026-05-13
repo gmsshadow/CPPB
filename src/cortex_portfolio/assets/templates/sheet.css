@@ -44,6 +44,8 @@
   --muted:     #6c6660;
   --paper:     #fdfcf8;
   --highlight: #f3ecdc;
+  --dice:      var(--ink);   /* die glyph colour. Defaults to body text;
+                                themeable separately via game.theme.dice. */
   --col-gap:   16pt;
 }
 
@@ -98,6 +100,36 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
   margin-top: 5pt;
 }
 .plot-points .section-icon { color: white; margin-right: 0; }
+
+/* Writable PP count: small bordered rectangle players fill in by hand.
+   PP fluctuates constantly during play so printing a fixed value would
+   be wrong; this is the worksheet equivalent. Sized for one or two
+   digits at sheet font scale. */
+.pp-box {
+  display: inline-block;
+  min-width: 22pt;
+  height: 14pt;
+  background: white;
+  border: 0.5pt solid white;
+  border-radius: 2pt;
+  vertical-align: middle;
+}
+
+/* Optional character portrait. Sits at the right edge of the header as
+   a fixed square; when absent, the meta block uses the full available
+   right space (header is a flex container, the meta block doesn't have
+   a fixed width). 75pt is roughly an inch -- visible but doesn't crowd. */
+.header .portrait {
+  flex: 0 0 auto;
+  width: 75pt; height: 75pt;
+  margin-left: 12pt;
+}
+.header .portrait img {
+  width: 100%; height: 100%;
+  object-fit: cover;       /* center-crop to square */
+  border-radius: 2pt;
+  border: 0.5pt solid var(--rule);
+}
 
 /* --------------------------------------------------------------------------
    Rows: the body is a sequence of these. Each is independently page-breakable.
@@ -215,7 +247,7 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
   font-family: "Cortex";
   font-size: 15pt;
   line-height: 1;
-  color: var(--ink);
+  color: var(--dice);
   vertical-align: -0.18em;
   display: inline-block;
   min-width: 22pt;
@@ -261,6 +293,91 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
 .milestone .tier    { display: flex; gap: 8pt; margin: 2pt 0; font-size: 9.5pt; }
 .milestone .tier-key   { flex: 0 0 38pt; font-weight: 600; color: var(--accent); }
 .milestone .tier-value { flex: 1 1 auto; }
+
+/* --------------------------------------------------------------------------
+   Growth pool entries
+   -------------------------------------------------------------------------- */
+/* Each entry is a small die rating followed by a free-text label. The list
+   layout is dense and packs nicely into a half-width column. */
+.growth-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4pt;
+}
+.growth-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8pt;
+  padding-bottom: 2pt;
+  border-bottom: 0.5pt dotted var(--rule);
+}
+.growth-row:last-child { border-bottom: none; }
+.growth-die {
+  flex: 0 0 auto;
+}
+.growth-text {
+  flex: 1 1 auto;
+  font-size: 9.5pt;
+}
+
+/* Empty growth section: same printable lines treatment as Complications,
+   so players can record awards by hand even if nothing is in the JSON. */
+.growth-blank {
+  min-height: 80pt;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 19pt,
+    var(--rule) 19pt,
+    var(--rule) 19.5pt
+  );
+}
+
+/* --------------------------------------------------------------------------
+   Session records
+   -------------------------------------------------------------------------- */
+/* One row per session: name on the left in bold, optional note flowing
+   to the right. */
+.sessions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4pt;
+}
+.session-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8pt;
+  padding-bottom: 2pt;
+  border-bottom: 0.5pt dotted var(--rule);
+}
+.session-row:last-child { border-bottom: none; }
+.session-name {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+.session-note {
+  flex: 1 1 auto;
+  font-size: 9.5pt;
+  color: #444;
+}
+
+/* Empty session-records section -- writing lines for pen-and-paper logging. */
+.sessions-blank {
+  min-height: 80pt;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 19pt,
+    var(--rule) 19pt,
+    var(--rule) 19.5pt
+  );
+}
 
 /* --------------------------------------------------------------------------
    Complications

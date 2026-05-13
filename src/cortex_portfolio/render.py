@@ -91,6 +91,8 @@ FA_ICONS = {
     "exclamation-triangle": "\uf071",  # Complications
     "fire":                 "\uf06d",
     "biohazard":            "\uf780",
+    "seedling":             "\uf4d8",  # Growth pool
+    "history":              "\uf1da",  # Session records
 }
 
 
@@ -234,6 +236,36 @@ def build_rows(actor_type_def: dict, character: dict) -> list[list[dict]]:
             "settings": {},
             "data": char_extras["milestones"],
             "full_width": True,
+        })
+
+    # Growth: an alternative XP system where each award is a (die, text)
+    # pair. Conceptually like Tales of Xadia's Growth Pool -- just a record
+    # of what the character has earned, no advancement maths.
+    growth_def = extras_def.get("growth") or {}
+    if growth_def.get("enabled"):
+        sections.append({
+            "kind": "growth",
+            "label": growth_def.get("label", "Growth"),
+            "icon": growth_def.get("icon", "seedling"),
+            "settings": {},
+            "data": char_extras.get("growth") or [],
+            "full_width": growth_def.get("full_width", False),
+        })
+
+    # Session records: a per-session log on the sheet itself. Each entry
+    # is just {name, note?} -- "Session 3" / "The Storm Spire" with an
+    # optional sentence summarising what happened. Like Growth and
+    # Complications, the section renders even when empty so players can
+    # add records by hand at the table.
+    sessions_def = extras_def.get("sessions") or {}
+    if sessions_def.get("enabled"):
+        sections.append({
+            "kind": "sessions",
+            "label": sessions_def.get("label", "Session Records"),
+            "icon": sessions_def.get("icon", "history"),
+            "settings": {},
+            "data": char_extras.get("sessions") or [],
+            "full_width": sessions_def.get("full_width", False),
         })
 
     # Complications: a Cortex Prime concept covering temporary step-rated

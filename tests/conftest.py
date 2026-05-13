@@ -26,6 +26,11 @@ def vigilant_game() -> dict:
 
 
 @pytest.fixture
+def xadia_game() -> dict:
+    return _load("xadia.game.json")
+
+
+@pytest.fixture
 def reyes_character() -> dict:
     return _load("reyes.character.json")
 
@@ -38,6 +43,11 @@ def harker_character() -> dict:
 @pytest.fixture
 def black_sea_character() -> dict:
     return _load("black_sea.character.json")
+
+
+@pytest.fixture
+def timba_character() -> dict:
+    return _load("timba.character.json")
 
 
 @pytest.fixture

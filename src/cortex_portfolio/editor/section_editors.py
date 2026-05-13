@@ -2,10 +2,11 @@
 
 Each section kind gets a dedicated editor:
   - PrimeSetEditor: list of traits with add/remove + a TraitForm per trait
-  - IdentityEditor: name/callsign/concept/player free-text
+  - IdentityEditor: name/concept/player free-text + optional portrait
   - StressEditor:   per-track stress + trauma die selector
   - MilestonesEditor: list of named milestones with tier text
   - NotesEditor:    plain text notes
+  - ComplicationsEditor / GrowthEditor / SessionsEditor: optional list extras
 
 Every editor exposes `dataChanged(dict)` -- a signal carrying the entire
 character with the latest edit applied. The main window listens to this
@@ -13,18 +14,25 @@ to drive auto-save state, validation, and re-rendering.
 """
 from __future__ import annotations
 
+import base64
 import copy
+import io
+from pathlib import Path
 from typing import Any, Callable
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PIL import Image, UnidentifiedImageError
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
+from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFileDialog,
     QFormLayout,
     QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -44,6 +52,145 @@ def _scroll_wrap(inner: QWidget) -> QScrollArea:
     scroll.setWidgetResizable(True)
     scroll.setFrameShape(QFrame.Shape.NoFrame)
     return scroll
+
+
+# ===========================================================================
+# Portrait picker
+# ===========================================================================
+
+# Portraits get downscaled so they fit inside this box (preserves aspect).
+# 600px is plenty -- the rendered PDF only shows the portrait at ~75pt
+# square, and we don't want to bloat character JSON files with raw 4MP
+# photos. JPEG quality 80 keeps file size around 20-40KB per portrait.
+_PORTRAIT_MAX_SIDE = 600
+_PORTRAIT_JPEG_QUALITY = 80
+
+
+def _encode_portrait(path: Path) -> str:
+    """Load `path`, downscale, encode as a JPEG data URI string.
+
+    Raises ValueError if the file isn't an image we can decode.
+    """
+    try:
+        img = Image.open(path)
+    except (UnidentifiedImageError, OSError) as e:
+        raise ValueError(f"Could not read image: {e}") from e
+
+    # Convert anything (RGBA, P, CMYK, ...) to RGB so JPEG encoding is safe.
+    # Transparency gets flattened onto white -- portraits rarely need alpha.
+    if img.mode != "RGB":
+        if img.mode in ("RGBA", "LA") or "transparency" in img.info:
+            bg = Image.new("RGB", img.size, (255, 255, 255))
+            bg.paste(img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None)
+            img = bg
+        else:
+            img = img.convert("RGB")
+
+    img.thumbnail((_PORTRAIT_MAX_SIDE, _PORTRAIT_MAX_SIDE), Image.LANCZOS)
+
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=_PORTRAIT_JPEG_QUALITY, optimize=True)
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return f"data:image/jpeg;base64,{b64}"
+
+
+class PortraitPicker(QWidget):
+    """A small widget: thumbnail + Choose / Clear buttons.
+
+    The value is a data URI string (or empty). Emits portraitChanged on any
+    successful change (load, clear). Decoding errors surface as a QMessageBox
+    and don't change state.
+    """
+    portraitChanged = pyqtSignal(str)
+
+    _THUMB_PX = 96  # editor-side preview size
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._data_uri: str = ""
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+
+        self._thumb = QLabel()
+        self._thumb.setFixedSize(self._THUMB_PX, self._THUMB_PX)
+        self._thumb.setFrameShape(QFrame.Shape.Box)
+        self._thumb.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._thumb.setStyleSheet(
+            "QLabel { background: #f8f8f8; color: #888; font-size: 9pt; }"
+        )
+        self._render_thumb()
+        layout.addWidget(self._thumb)
+
+        btns = QVBoxLayout()
+        btns.setSpacing(4)
+        self._choose_btn = QPushButton("Choose Image\u2026")
+        self._choose_btn.clicked.connect(self._on_choose)
+        btns.addWidget(self._choose_btn)
+        self._clear_btn = QPushButton("Clear")
+        self._clear_btn.clicked.connect(self._on_clear)
+        self._clear_btn.setEnabled(False)
+        btns.addWidget(self._clear_btn)
+        btns.addStretch(1)
+        layout.addLayout(btns)
+        layout.addStretch(1)
+
+    # ------------------------------------------------------------------
+    def set_portrait(self, data_uri: str | None) -> None:
+        self._data_uri = data_uri or ""
+        self._render_thumb()
+        self._clear_btn.setEnabled(bool(self._data_uri))
+
+    def portrait(self) -> str:
+        return self._data_uri
+
+    # ------------------------------------------------------------------
+    def _render_thumb(self) -> None:
+        if not self._data_uri or not self._data_uri.startswith("data:image/"):
+            self._thumb.setText("No portrait")
+            self._thumb.setPixmap(QPixmap())
+            return
+        # Decode the data URI back to bytes for preview rendering.
+        try:
+            _, b64 = self._data_uri.split(",", 1)
+            raw = base64.b64decode(b64)
+            qimg = QImage.fromData(raw)
+            if qimg.isNull():
+                raise ValueError("Could not decode embedded image")
+            pix = QPixmap.fromImage(qimg).scaled(
+                QSize(self._THUMB_PX, self._THUMB_PX),
+                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            self._thumb.setText("")
+            self._thumb.setPixmap(pix)
+        except Exception:
+            # Stored data is corrupted or unrenderable; show placeholder
+            # but don't clear the stored data -- the user can decide.
+            self._thumb.setText("(unreadable)")
+            self._thumb.setPixmap(QPixmap())
+
+    def _on_choose(self) -> None:
+        path_str, _ = QFileDialog.getOpenFileName(
+            self,
+            "Choose a portrait image",
+            "",
+            "Images (*.png *.jpg *.jpeg *.webp *.bmp *.tif *.tiff);;All files (*)",
+        )
+        if not path_str:
+            return
+        try:
+            data_uri = _encode_portrait(Path(path_str))
+        except ValueError as e:
+            QMessageBox.warning(self, "Couldn't load image", str(e))
+            return
+        self.set_portrait(data_uri)
+        self.portraitChanged.emit(data_uri)
+
+    def _on_clear(self) -> None:
+        self.set_portrait("")
+        self.portraitChanged.emit("")
 
 
 # ===========================================================================
@@ -71,6 +218,12 @@ class IdentityEditor(QWidget):
             form.addRow(QLabel(label), edit)
             self._inputs[key] = edit
 
+        # Portrait picker. The image data lives in identity.portrait as a
+        # JPEG data URI; the picker handles the load/downscale/encode flow.
+        self._portrait = PortraitPicker()
+        self._portrait.portraitChanged.connect(self._on_portrait_changed)
+        form.addRow(QLabel("Portrait"), self._portrait)
+
     def set_character(self, character: dict) -> None:
         self._character = character
         ident = character.get("identity") or {}
@@ -78,6 +231,10 @@ class IdentityEditor(QWidget):
             edit.blockSignals(True)
             edit.setText(ident.get(key, ""))
             edit.blockSignals(False)
+        # Don't emit during populate
+        self._portrait.blockSignals(True)
+        self._portrait.set_portrait(ident.get("portrait", ""))
+        self._portrait.blockSignals(False)
 
     def _set(self, key: str, val: str) -> None:
         ident = self._character.setdefault("identity", {})
@@ -85,6 +242,14 @@ class IdentityEditor(QWidget):
             ident[key] = val
         else:
             ident.pop(key, None)
+        self.dataChanged.emit(self._character)
+
+    def _on_portrait_changed(self, data_uri: str) -> None:
+        ident = self._character.setdefault("identity", {})
+        if data_uri:
+            ident["portrait"] = data_uri
+        else:
+            ident.pop("portrait", None)
         self.dataChanged.emit(self._character)
 
 
@@ -440,11 +605,20 @@ class NotesEditor(QWidget):
         v.addWidget(QLabel("<h3>Notes</h3>"))
 
         # Plot points lives at the top of notes for now -- it's the only
-        # other extras field that doesn't have its own section.
+        # other extras field that doesn't have its own section. The value
+        # stored here is for between-session record-keeping; the rendered
+        # sheet shows a writable box rather than a fixed number, because
+        # PP changes too often during play for a printed value to be
+        # useful.
         pp_row = QHBoxLayout()
         pp_row.addWidget(QLabel("Plot Points"))
         self._pp = QSpinBox()
         self._pp.setRange(0, 99)
+        self._pp.setToolTip(
+            "Recorded for reference between sessions. The rendered PDF "
+            "shows a writable box instead of this value, since PP changes "
+            "constantly during play."
+        )
         self._pp.valueChanged.connect(self._on_pp_change)
         pp_row.addWidget(self._pp)
         pp_row.addStretch(1)
@@ -572,6 +746,223 @@ class ComplicationsEditor(QWidget):
 
     def _on_add(self) -> None:
         self._list().append({"name": "", "dice": ["d6"]})
+        self._rebuild()
+        self.dataChanged.emit(self._character)
+
+    def _remove(self, index: int) -> None:
+        items = self._list()
+        if 0 <= index < len(items):
+            del items[index]
+            self._rebuild()
+            self.dataChanged.emit(self._character)
+
+    def _update(self, index: int, field: str, value) -> None:
+        items = self._list()
+        if 0 <= index < len(items):
+            items[index][field] = value
+            self.dataChanged.emit(self._character)
+
+
+# ===========================================================================
+# Growth pool entries
+# ===========================================================================
+
+class GrowthEditor(QWidget):
+    """Edit a character's Growth Pool entries.
+
+    Each entry is {die, text} -- a die rating and a brief description of
+    what was earned for. This is a record-keeping aid, not a mechanism;
+    the editor doesn't enforce any "spend X dice to advance Y" maths. The
+    Tales of Xadia sheet lays these out in fixed slot patterns
+    (3xd4, 3xd6, 3xd8, 3xd10, 2xd12) but our schema is just a free-form
+    list -- add as many as you like.
+    """
+    dataChanged = pyqtSignal(dict)
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self._character: dict = {}
+
+        outer = QVBoxLayout(self)
+        head = QHBoxLayout()
+        head.addWidget(QLabel("<h3>Growth</h3>"))
+        head.addStretch(1)
+        add = QPushButton("+ Add Growth Entry")
+        add.clicked.connect(self._on_add)
+        head.addWidget(add)
+        outer.addLayout(head)
+
+        info = QLabel(
+            "Each entry pairs a die rating with a brief note about what was "
+            "earned. The PDF reserves printable blank space when the list "
+            "is empty so awards can be added in pen-and-paper at the table."
+        )
+        info.setWordWrap(True)
+        info.setStyleSheet("color: #666; padding: 4px 0 8px 0;")
+        outer.addWidget(info)
+
+        self._inner = QWidget()
+        self._inner_layout = QVBoxLayout(self._inner)
+        self._inner_layout.setContentsMargins(0, 0, 0, 0)
+        self._inner_layout.addStretch(1)
+        outer.addWidget(_scroll_wrap(self._inner), 1)
+
+        self._frames: list[QFrame] = []
+
+    def set_character(self, character: dict) -> None:
+        self._character = character
+        self._rebuild()
+
+    def _list(self) -> list[dict]:
+        return self._character.setdefault("extras", {}).setdefault("growth", [])
+
+    def _rebuild(self) -> None:
+        for f in self._frames:
+            f.deleteLater()
+        self._frames = []
+        for i, _g in enumerate(self._list()):
+            frame = self._make_row(i)
+            self._frames.append(frame)
+            self._inner_layout.insertWidget(self._inner_layout.count() - 1, frame)
+
+    def _make_row(self, index: int) -> QFrame:
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.StyledPanel)
+        h = QHBoxLayout(frame)
+        h.setContentsMargins(6, 4, 6, 4)
+        h.setSpacing(6)
+
+        g = self._list()[index]
+
+        die = QComboBox()
+        die.addItems(["d4", "d6", "d8", "d10", "d12"])
+        current = g.get("die") or "d6"
+        idx = die.findText(current)
+        die.setCurrentIndex(idx if idx >= 0 else 1)
+        die.currentTextChanged.connect(
+            lambda v, i=index: self._update(i, "die", v)
+        )
+        h.addWidget(die)
+
+        text = QLineEdit(g.get("text", ""))
+        text.setPlaceholderText("What this was earned for")
+        text.textChanged.connect(lambda v, i=index: self._update(i, "text", v))
+        h.addWidget(text, 1)
+
+        rm = QPushButton("\u2715")
+        rm.setFixedWidth(24)
+        rm.setToolTip("Remove")
+        rm.clicked.connect(lambda _c, i=index: self._remove(i))
+        h.addWidget(rm)
+        return frame
+
+    def _on_add(self) -> None:
+        self._list().append({"die": "d6", "text": ""})
+        self._rebuild()
+        self.dataChanged.emit(self._character)
+
+    def _remove(self, index: int) -> None:
+        items = self._list()
+        if 0 <= index < len(items):
+            del items[index]
+            self._rebuild()
+            self.dataChanged.emit(self._character)
+
+    def _update(self, index: int, field: str, value) -> None:
+        items = self._list()
+        if 0 <= index < len(items):
+            items[index][field] = value
+            self.dataChanged.emit(self._character)
+
+
+# ===========================================================================
+# Session records
+# ===========================================================================
+
+class SessionsEditor(QWidget):
+    """Edit a character's session records: a list of {name, note?} entries.
+
+    Same shape as Complications and Growth -- a free-form list with add,
+    remove, and inline edit. The PDF reserves blank writing lines if the
+    list is empty, so groups can use the section in pen-and-paper play.
+    """
+    dataChanged = pyqtSignal(dict)
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self._character: dict = {}
+
+        outer = QVBoxLayout(self)
+        head = QHBoxLayout()
+        head.addWidget(QLabel("<h3>Session Records</h3>"))
+        head.addStretch(1)
+        add = QPushButton("+ Add Session")
+        add.clicked.connect(self._on_add)
+        head.addWidget(add)
+        outer.addLayout(head)
+
+        info = QLabel(
+            "Per-session log on the sheet. Each entry is a session name "
+            "(e.g. \"Session 3\" or \"The Storm Spire\") and an optional "
+            "brief note. The PDF reserves printable blank space when the "
+            "list is empty."
+        )
+        info.setWordWrap(True)
+        info.setStyleSheet("color: #666; padding: 4px 0 8px 0;")
+        outer.addWidget(info)
+
+        self._inner = QWidget()
+        self._inner_layout = QVBoxLayout(self._inner)
+        self._inner_layout.setContentsMargins(0, 0, 0, 0)
+        self._inner_layout.addStretch(1)
+        outer.addWidget(_scroll_wrap(self._inner), 1)
+
+        self._frames: list[QFrame] = []
+
+    def set_character(self, character: dict) -> None:
+        self._character = character
+        self._rebuild()
+
+    def _list(self) -> list[dict]:
+        return self._character.setdefault("extras", {}).setdefault("sessions", [])
+
+    def _rebuild(self) -> None:
+        for f in self._frames:
+            f.deleteLater()
+        self._frames = []
+        for i, _s in enumerate(self._list()):
+            frame = self._make_row(i)
+            self._frames.append(frame)
+            self._inner_layout.insertWidget(self._inner_layout.count() - 1, frame)
+
+    def _make_row(self, index: int) -> QFrame:
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.StyledPanel)
+        h = QHBoxLayout(frame)
+        h.setContentsMargins(6, 4, 6, 4)
+        h.setSpacing(6)
+
+        s = self._list()[index]
+
+        name = QLineEdit(s.get("name", ""))
+        name.setPlaceholderText("Session name (e.g. Session 3, The Storm Spire)")
+        name.textChanged.connect(lambda v, i=index: self._update(i, "name", v))
+        h.addWidget(name, 1)
+
+        note = QLineEdit(s.get("note", ""))
+        note.setPlaceholderText("Optional brief note")
+        note.textChanged.connect(lambda v, i=index: self._update(i, "note", v))
+        h.addWidget(note, 2)
+
+        rm = QPushButton("\u2715")
+        rm.setFixedWidth(24)
+        rm.setToolTip("Remove")
+        rm.clicked.connect(lambda _c, i=index: self._remove(i))
+        h.addWidget(rm)
+        return frame
+
+    def _on_add(self) -> None:
+        self._list().append({"name": "", "note": ""})
         self._rebuild()
         self.dataChanged.emit(self._character)
 

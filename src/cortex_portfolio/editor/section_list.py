@@ -77,6 +77,16 @@ class SectionList(QListWidget):
             label = f"Milestones    ({n})" if n else "Milestones    (empty)"
             self._add_item(label, "milestones", "", dim=n == 0)
 
+        if extras_def.get("growth", {}).get("enabled"):
+            n = len(char_extras.get("growth") or [])
+            label = f"Growth    ({n})" if n else "Growth    (empty)"
+            self._add_item(label, "growth", "", dim=n == 0)
+
+        if extras_def.get("sessions", {}).get("enabled"):
+            n = len(char_extras.get("sessions") or [])
+            label = f"Sessions    ({n})" if n else "Sessions    (empty)"
+            self._add_item(label, "sessions", "", dim=n == 0)
+
         if extras_def.get("complications", {}).get("enabled"):
             n = len(char_extras.get("complications") or [])
             label = f"Complications    ({n})" if n else "Complications    (empty)"
@@ -125,6 +135,20 @@ class SectionList(QListWidget):
             elif kind == "milestones":
                 n = len(char_extras.get("milestones") or [])
                 item.setText(f"Milestones    ({n})" if n else "Milestones    (empty)")
+                item.setForeground(
+                    Qt.GlobalColor.gray if n == 0 else self.palette().windowText()
+                )
+
+            elif kind == "growth":
+                n = len(char_extras.get("growth") or [])
+                item.setText(f"Growth    ({n})" if n else "Growth    (empty)")
+                item.setForeground(
+                    Qt.GlobalColor.gray if n == 0 else self.palette().windowText()
+                )
+
+            elif kind == "sessions":
+                n = len(char_extras.get("sessions") or [])
+                item.setText(f"Sessions    ({n})" if n else "Sessions    (empty)")
                 item.setForeground(
                     Qt.GlobalColor.gray if n == 0 else self.palette().windowText()
                 )

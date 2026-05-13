@@ -183,6 +183,59 @@ For non-trivial games, take a look at:
   (Character + Scene), Doom Pool, classic 5-prime-set character.
 - `examples/vigilant.game.json` — modern occult investigation, exercises
   Power Sets (description + sub-traits + SFX + Limits, no top-level die).
+- `examples/xadia.game.json` — Tales of Xadia preset, contributed by a
+  user who built it through the editor; demonstrates a 7-prime-set
+  character (Distinctions, Attributes, Values, Specialities, Assets,
+  Relationships, Goals) with six stress tracks. The Timba example
+  character uses the first five.
+
+### Character portraits
+
+A character can carry an optional portrait, embedded directly in the
+character JSON as a base64 data URI under `identity.portrait`. The editor
+handles the load and encode flow: pick an image from disk, it gets
+downscaled to fit within 600×600 and re-encoded as JPEG quality 80, then
+stored in the JSON. Typical portrait adds 20–40 KB to the character file.
+
+When set, the portrait renders as a small square at the top-right of the
+sheet header. When absent, the header reflows naturally — no empty space.
+
+The portrait field is a string; the editor produces data URIs, but the
+renderer will pass any string through to `<img src="…">`. So external
+URLs work too, with the caveat that they won't embed in offline PDFs
+(the validator warns about this).
+
+### Alternative XP systems
+
+Cortex games use one of several XP/advancement systems. The schema
+supports two so far, declared per actor type under `extras`:
+
+- **Milestones** — three-tiered triggers (`1xp` / `3xp` / `10xp`) per
+  milestone. Use when the game leans on named milestones with explicit
+  triggers (Hammerheads, Marvel Heroic, Smallville).
+- **Growth Pool** — a free-form list of `{die, text}` entries the player
+  fills in as awards are earned during play. Use when the game tracks
+  XP as die-rated awards rather than tiered milestones (Tales of Xadia).
+
+Enable one or the other in the game-def:
+
+```json
+"extras": { "growth": { "enabled": true } }
+```
+
+Records on the character side are just a list:
+
+```json
+"extras": {
+  "growth": [
+    { "die": "d6", "text": "Saved the village from the experiment" }
+  ]
+}
+```
+
+Enabling both produces a validator warning: canonical Cortex treats them
+as alternatives. Some homebrew uses both; you can ignore the warning if
+that's intentional.
 
 ## Adding a new icon
 
@@ -268,23 +321,36 @@ and add `qt_binaries` to the `binaries=[]` argument of `Analysis(...)`.
 ```
 cortex_portfolio/
 ├── pyproject.toml
-├── cortex-portfolio.spec       # PyInstaller config
+├── cortex-portfolio.spec        # PyInstaller config (CLI)
+├── cortex-portfolio-editor.spec # PyInstaller config (GUI)
 ├── README.md
 ├── examples/
 │   ├── hammerheads.game.json
 │   ├── vigilant.game.json
-│   ├── reyes.character.json    (Character actor type)
+│   ├── xadia.game.json
+│   ├── reyes.character.json     (Character actor type)
 │   ├── black_sea.character.json (Scene actor type)
-│   ├── harker.character.json   (Power-Set-using investigator)
-│   └── broken.character.json   (intentionally invalid; for the validator demo)
+│   ├── harker.character.json    (Power-Set-using investigator)
+│   ├── timba.character.json     (Tales of Xadia)
+│   └── broken.character.json    (intentionally invalid; validator demo)
 ├── src/cortex_portfolio/
-│   ├── __init__.py             # version + DIE_DIGIT constants
-│   ├── __main__.py             # python -m entry
-│   ├── cli.py                  # argparse front-end
-│   ├── render.py               # JSON -> rows -> Jinja -> WeasyPrint -> PDF
-│   ├── validate.py             # schema + cross-validation
+│   ├── __init__.py              # version + DIE_DIGIT constants
+│   ├── __main__.py              # python -m entry
+│   ├── cli.py                   # argparse front-end
+│   ├── render.py                # JSON -> rows -> Jinja -> WeasyPrint -> PDF
+│   ├── validate.py              # schema + cross-validation
+│   ├── editor/                  # PyQt6 desktop editor
+│   │   ├── __main__.py
+│   │   ├── main_window.py       # character editor
+│   │   ├── trait_form.py        # flag-driven trait widget
+│   │   ├── section_editors.py   # identity / stress / milestones / etc.
+│   │   ├── section_list.py      # left-pane navigator
+│   │   ├── issues_panel.py      # right-pane validation feedback
+│   │   ├── game_def_window.py   # game-definition editor
+│   │   ├── game_def_forms.py    # game-def form widgets
+│   │   └── widgets.py           # shared dice/icon/list editors
 │   └── assets/
-│       ├── fonts/              # cortex-icons + Font Awesome
+│       ├── fonts/               # cortex-icons + Font Awesome
 │       └── templates/
 │           ├── sheet.html.j2
 │           └── sheet.css

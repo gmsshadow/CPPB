@@ -15,6 +15,23 @@
   <meta charset="utf-8">
   <title>{{ character.identity.name }} — {{ game.name }}</title>
   <link rel="stylesheet" href="sheet.css">
+  {#- Optional per-game theme. Each key overrides one of the CSS custom
+      properties defined at :root in sheet.css. Missing keys fall through
+      to the stylesheet defaults. Values are passed through to CSS verbatim,
+      so any valid CSS colour syntax works -- hex, rgb(), hsl(), named.   -#}
+  {% if game.theme %}
+    <style>
+      :root {
+        {% if game.theme.accent    %}--accent:    {{ game.theme.accent    }};{% endif %}
+        {% if game.theme.rule      %}--rule:      {{ game.theme.rule      }};{% endif %}
+        {% if game.theme.muted     %}--muted:     {{ game.theme.muted     }};{% endif %}
+        {% if game.theme.highlight %}--highlight: {{ game.theme.highlight }};{% endif %}
+        {% if game.theme.ink       %}--ink:       {{ game.theme.ink       }};{% endif %}
+        {% if game.theme.paper     %}--paper:     {{ game.theme.paper     }};{% endif %}
+        {% if game.theme.dice      %}--dice:      {{ game.theme.dice      }};{% endif %}
+      }
+    </style>
+  {% endif %}
 </head>
 <body>
 
@@ -139,6 +156,34 @@
           <div class="complications-blank"></div>
         {% endif %}
 
+      {% elif sec.kind == 'growth' %}
+        {% if sec.data %}
+          <ul class="growth-list">
+            {% for g in sec.data %}
+              <li class="growth-row">
+                <span class="growth-die">{{ [g.die] | dice }}</span>
+                <span class="growth-text">{{ g.text }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="growth-blank"></div>
+        {% endif %}
+
+      {% elif sec.kind == 'sessions' %}
+        {% if sec.data %}
+          <ul class="sessions-list">
+            {% for s in sec.data %}
+              <li class="session-row">
+                <span class="session-name">{{ s.name }}</span>
+                {% if s.note %}<span class="session-note">{{ s.note }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="sessions-blank"></div>
+        {% endif %}
+
       {% elif sec.kind == 'notes' %}
         <div class="notes"><p>{{ sec.data }}</p></div>
       {% endif %}
@@ -167,13 +212,21 @@
       {% if character.identity.player %}
         <div>Played by {{ character.identity.player }}</div>
       {% endif %}
-      {% if character.extras and character.extras.plot_points is not none %}
+      {% if actor_type.extras and actor_type.extras.plot_points and actor_type.extras.plot_points.enabled %}
         <div class="plot-points">
           <span class="section-icon">{{ icon_glyph('coins') }}</span>
-          {{ character.extras.plot_points }} PP
+          <span class="pp-box" aria-label="Plot points count"></span>
+          PP
         </div>
       {% endif %}
     </div>
+    {#- Optional portrait. Renders only when identity.portrait is set;
+        otherwise the meta block flexes to the right edge as before. -#}
+    {% if character.identity.portrait %}
+      <div class="portrait">
+        <img src="{{ character.identity.portrait }}" alt="" />
+      </div>
+    {% endif %}
   </header>
 
   <main>

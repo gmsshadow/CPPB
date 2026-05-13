@@ -36,10 +36,12 @@ from ..validate import validate, split
 from .issues_panel import IssuesPanel
 from .section_editors import (
     ComplicationsEditor,
+    GrowthEditor,
     IdentityEditor,
     MilestonesEditor,
     NotesEditor,
     PrimeSetEditor,
+    SessionsEditor,
     StressEditor,
 )
 from .section_list import SectionList
@@ -389,6 +391,10 @@ class MainWindow(QMainWindow):
             editor = StressEditor(stress_def)
         elif kind == "milestones":
             editor = MilestonesEditor()
+        elif kind == "growth":
+            editor = GrowthEditor()
+        elif kind == "sessions":
+            editor = SessionsEditor()
         elif kind == "complications":
             editor = ComplicationsEditor()
         elif kind == "notes":

@@ -67,11 +67,127 @@ def _scroll_form() -> tuple[QWidget, QFormLayout]:
 
 
 # ===========================================================================
-# GameForm -- top-level metadata (id, name, version, description, dice_pool)
+# Colour picker -- a swatch + hex field + Choose / Reset buttons
+# ===========================================================================
+
+class ColorPicker(QWidget):
+    """One-row colour picker: shows the current value, opens QColorDialog,
+    or resets to the default (rendered stylesheet value).
+
+    Emits colorChanged(str). Empty string means "reset to default" -- the
+    renderer's CSS variable falls through to whatever sheet.css declares
+    at :root. Non-empty values are passed through to CSS verbatim.
+    """
+    colorChanged = pyqtSignal(str)
+
+    _SWATCH_SIZE = 22
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._value: str = ""
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+        self._swatch = QLabel()
+        self._swatch.setFixedSize(self._SWATCH_SIZE, self._SWATCH_SIZE)
+        self._swatch.setFrameShape(QFrame.Shape.Box)
+        layout.addWidget(self._swatch)
+
+        self._hex_edit = QLineEdit()
+        self._hex_edit.setPlaceholderText("(default)")
+        self._hex_edit.setMaximumWidth(110)
+        self._hex_edit.editingFinished.connect(self._on_hex_typed)
+        layout.addWidget(self._hex_edit)
+
+        choose = QPushButton("Choose\u2026")
+        choose.clicked.connect(self._on_choose)
+        layout.addWidget(choose)
+
+        reset = QPushButton("Reset")
+        reset.setToolTip("Use the default colour from the stylesheet")
+        reset.clicked.connect(self._on_reset)
+        layout.addWidget(reset)
+
+        layout.addStretch(1)
+        self._render_swatch()
+
+    def set_color(self, value: str | None) -> None:
+        self._value = value or ""
+        self._hex_edit.blockSignals(True)
+        self._hex_edit.setText(self._value)
+        self._hex_edit.blockSignals(False)
+        self._render_swatch()
+
+    def color(self) -> str:
+        return self._value
+
+    def _render_swatch(self) -> None:
+        if self._value:
+            self._swatch.setStyleSheet(
+                f"QLabel {{ background: {self._value}; border: 1px solid #999; }}"
+            )
+        else:
+            self._swatch.setStyleSheet(
+                "QLabel { background: repeating-linear-gradient(45deg, "
+                "#eee 0 4px, #ccc 4px 8px); border: 1px solid #999; }"
+            )
+
+    def _on_choose(self) -> None:
+        from PyQt6.QtGui import QColor
+        from PyQt6.QtWidgets import QColorDialog
+
+        initial = QColor(self._value) if self._value else QColor("#888")
+        if not initial.isValid():
+            initial = QColor("#888")
+        chosen = QColorDialog.getColor(initial, self, "Pick a colour")
+        if not chosen.isValid():
+            return
+        new_value = chosen.name()  # lowercase #rrggbb
+        self.set_color(new_value)
+        self.colorChanged.emit(new_value)
+
+    def _on_reset(self) -> None:
+        if self._value:
+            self.set_color("")
+            self.colorChanged.emit("")
+
+    def _on_hex_typed(self) -> None:
+        text = self._hex_edit.text().strip()
+        if text == self._value:
+            return  # editingFinished fires on focus loss even without changes
+        self._value = text
+        self._render_swatch()
+        self.colorChanged.emit(text)
+
+
+# ===========================================================================
+# GameForm -- top-level metadata (id, name, version, description, dice_pool,
+# theme)
 # ===========================================================================
 
 class GameForm(QWidget):
     dataChanged = pyqtSignal(dict)
+
+    # Theme keys exposed in the UI, in display order. Keep in sync with the
+    # template's :root override block in sheet.html.j2.
+    _THEME_KEYS = [
+        ("accent",    "Accent",
+         "Primary brand colour. Section headings, dice icons, the PP pill."),
+        ("rule",      "Rule",
+         "Divider lines under section headings and between rows."),
+        ("muted",     "Muted text",
+         "Subtle text -- italic concept line, \"Played by\", note text."),
+        ("highlight", "Highlight",
+         "Background tint for milestone boxes and similar callouts."),
+        ("dice",      "Dice",
+         "Colour of the die rating glyphs. Defaults to body text colour."),
+        ("ink",       "Body text",
+         "Main reading colour. Most prose on the sheet uses this."),
+        ("paper",     "Paper",
+         "Sheet background. Defaults to a warm off-white."),
+    ]
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -112,6 +228,34 @@ class GameForm(QWidget):
         form.addRow("Dice pool", self._dice_pool)
 
         outer.addWidget(meta_box)
+
+        # ----- Theme ----------------------------------------------------
+        theme_box = QGroupBox("Theme")
+        theme_layout = QVBoxLayout(theme_box)
+        theme_info = QLabel(
+            "Per-game colour overrides for the printed sheet. Leave any "
+            "value blank to use the default. Values are passed through to "
+            "CSS, so hex (#5b2a47), rgb(), and named colours all work."
+        )
+        theme_info.setWordWrap(True)
+        theme_info.setStyleSheet("color: #666; padding-bottom: 4px;")
+        theme_layout.addWidget(theme_info)
+
+        theme_form = QFormLayout()
+        self._theme_pickers: dict[str, ColorPicker] = {}
+        for key, label, tip in self._THEME_KEYS:
+            picker = ColorPicker()
+            picker.setToolTip(tip)
+            picker.colorChanged.connect(
+                lambda v, k=key: self._set_theme(k, v)
+            )
+            self._theme_pickers[key] = picker
+            row_label = QLabel(label)
+            row_label.setToolTip(tip)
+            theme_form.addRow(row_label, picker)
+        theme_layout.addLayout(theme_form)
+        outer.addWidget(theme_box)
+
         outer.addStretch(1)
 
     # ----------------------------------------------------------------
@@ -124,6 +268,9 @@ class GameForm(QWidget):
             self._version.setText(game.get("version", ""))
             self._description.setPlainText(game.get("description", ""))
             self._dice_pool.set_pool(game.get("dice_pool"))
+            theme = game.get("theme") or {}
+            for key, picker in self._theme_pickers.items():
+                picker.set_color(theme.get(key, ""))
         finally:
             self._suspend = False
 
@@ -131,6 +278,19 @@ class GameForm(QWidget):
         if self._suspend or self._game is None:
             return
         _set_or_drop(self._game, key, value)
+        self.dataChanged.emit(self._game)
+
+    def _set_theme(self, key: str, value: str) -> None:
+        if self._suspend or self._game is None:
+            return
+        theme = self._game.setdefault("theme", {})
+        if value:
+            theme[key] = value
+        else:
+            theme.pop(key, None)
+        if not theme:
+            # Don't leave an empty {} dangling in the JSON.
+            self._game.pop("theme", None)
         self.dataChanged.emit(self._game)
 
 
@@ -548,6 +708,40 @@ class ExtrasForm(QWidget):
         comp_layout.addWidget(comp_info)
         outer.addWidget(comp_box)
 
+        # ----- Growth pool --------------------------------------------
+        growth_box = QGroupBox("Growth pool")
+        growth_layout = QVBoxLayout(growth_box)
+        self._growth_enabled = QCheckBox("Enable growth pool section")
+        self._growth_enabled.toggled.connect(self._on_growth_enabled)
+        growth_layout.addWidget(self._growth_enabled)
+        growth_info = QLabel(
+            "Alternative XP system used by Tales of Xadia and similar games. "
+            "Each entry is a die rating plus a brief note about what was "
+            "earned. Mutually exclusive with Milestones at the table, "
+            "though our validator will only warn if both are enabled."
+        )
+        growth_info.setWordWrap(True)
+        growth_info.setStyleSheet("color: #666; padding-left: 18px;")
+        growth_layout.addWidget(growth_info)
+        outer.addWidget(growth_box)
+
+        # ----- Session records ----------------------------------------
+        sessions_box = QGroupBox("Session records")
+        sessions_layout = QVBoxLayout(sessions_box)
+        self._sessions_enabled = QCheckBox("Enable session-records section")
+        self._sessions_enabled.toggled.connect(self._on_sessions_enabled)
+        sessions_layout.addWidget(self._sessions_enabled)
+        sessions_info = QLabel(
+            "Per-session log on the character sheet itself. Each entry has "
+            "a name and an optional brief note. The PDF reserves printable "
+            "blank space when no records have been added, so groups can use "
+            "the section in pen-and-paper play."
+        )
+        sessions_info.setWordWrap(True)
+        sessions_info.setStyleSheet("color: #666; padding-left: 18px;")
+        sessions_layout.addWidget(sessions_info)
+        outer.addWidget(sessions_box)
+
         outer.addStretch(1)
 
     # ----------------------------------------------------------------
@@ -569,6 +763,12 @@ class ExtrasForm(QWidget):
 
             comp = extras.get("complications") or {}
             self._comp_enabled.setChecked(bool(comp.get("enabled")))
+
+            growth = extras.get("growth") or {}
+            self._growth_enabled.setChecked(bool(growth.get("enabled")))
+
+            sessions = extras.get("sessions") or {}
+            self._sessions_enabled.setChecked(bool(sessions.get("enabled")))
         finally:
             self._suspend = False
 
@@ -675,4 +875,16 @@ class ExtrasForm(QWidget):
         if self._suspend or self._extras is None:
             return
         self._extras.setdefault("complications", {})["enabled"] = checked
+        self.dataChanged.emit(self._extras)
+
+    def _on_growth_enabled(self, checked: bool) -> None:
+        if self._suspend or self._extras is None:
+            return
+        self._extras.setdefault("growth", {})["enabled"] = checked
+        self.dataChanged.emit(self._extras)
+
+    def _on_sessions_enabled(self, checked: bool) -> None:
+        if self._suspend or self._extras is None:
+            return
+        self._extras.setdefault("sessions", {})["enabled"] = checked
         self.dataChanged.emit(self._extras)

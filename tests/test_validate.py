@@ -27,6 +27,13 @@ class TestBundledExamplesValidate:
     def test_harker_against_vigilant(self, vigilant_game, harker_character):
         assert validate(vigilant_game, harker_character) == []
 
+    def test_timba_against_xadia(self, xadia_game, timba_character):
+        assert validate(xadia_game, timba_character) == []
+
+    def test_xadia_game_def_alone_validates(self, xadia_game):
+        # Game-def-level checks pass without a character.
+        assert validate(xadia_game) == []
+
     def test_game_def_alone_validates(self, hammerheads_game):
         # No character -> only game-def-level checks run.
         assert validate(hammerheads_game) == []

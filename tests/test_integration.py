@@ -33,6 +33,7 @@ class TestRenderPDF:
             ("hammerheads.game.json", "reyes.character.json"),
             ("hammerheads.game.json", "black_sea.character.json"),
             ("vigilant.game.json",    "harker.character.json"),
+            ("xadia.game.json",       "timba.character.json"),
         ]
         for game, char in cases:
             out = tmp_path / f"{Path(char).stem}.pdf"

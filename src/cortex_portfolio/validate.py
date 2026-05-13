@@ -20,10 +20,43 @@ Errors block rendering; warnings do not unless --strict is set.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from . import VALID_DICE
+
+
+# A pragmatic check for CSS colour values. Not exhaustive (CSS named
+# colours are 147 entries and CSS spec is broader still); good enough to
+# flag obvious typos like "redd" or "5b2a47" (no #) without false
+# positives on legitimate values. Real validation happens at render time
+# when CSS just silently ignores garbage.
+_CSS_COLOR_HEX_RE = re.compile(r"^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+_CSS_COLOR_FN_RE = re.compile(r"^(?:rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|color)\(.+\)$")
+_CSS_COLOR_NAMES = frozenset({
+    # Most common; users typing a name almost always pick from this set.
+    # Full CSS 147-name list is overkill for what we're doing.
+    "black", "white", "red", "green", "blue", "yellow", "orange", "purple",
+    "pink", "brown", "grey", "gray", "darkgrey", "darkgray", "lightgrey",
+    "lightgray", "silver", "gold", "navy", "teal", "maroon", "crimson",
+    "indigo", "violet", "turquoise", "olive", "lime", "cyan", "magenta",
+    "darkred", "darkblue", "darkgreen", "darkorange", "darkviolet",
+    "darkcyan", "darkmagenta", "darkslateblue", "darkslategray",
+    "lightblue", "lightgreen", "lightyellow", "transparent",
+})
+
+
+def _looks_like_css_color(value: str) -> bool:
+    """Heuristic: does this string parse as a CSS colour value?"""
+    if not value:
+        return False
+    v = value.strip().lower()
+    return (
+        _CSS_COLOR_HEX_RE.match(v) is not None
+        or _CSS_COLOR_FN_RE.match(v) is not None
+        or v in _CSS_COLOR_NAMES
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +160,29 @@ def _check_game_def(ctx: _Ctx, gd: Any, p: str) -> None:
     if not isinstance(actor_types, dict) or not actor_types:
         ctx.err(f"{p}.actor_types", "must be a non-empty mapping of id -> actor type")
         return
+
+    # Theme: optional per-game colour overrides. Each key maps to a CSS
+    # variable in sheet.css. We don't try to validate that values *render*
+    # well -- that's a design judgement -- but we do warn if a value
+    # clearly isn't a valid CSS colour, since the renderer would silently
+    # produce garbage in that case.
+    theme = gd.get("theme")
+    if theme is not None:
+        if not isinstance(theme, dict):
+            ctx.err(f"{p}.theme", "must be a mapping of colour-name -> CSS value")
+        else:
+            known_theme_keys = {"accent", "rule", "muted", "highlight",
+                                "ink", "paper", "dice"}
+            for key, value in theme.items():
+                if key not in known_theme_keys:
+                    ctx.warn(f"{p}.theme.{key}",
+                             f"unknown theme key {key!r}; recognized keys: "
+                             f"{sorted(known_theme_keys)}")
+                if not isinstance(value, str):
+                    ctx.err(f"{p}.theme.{key}", "theme value must be a string")
+                elif not _looks_like_css_color(value):
+                    ctx.warn(f"{p}.theme.{key}",
+                             f"{value!r} doesn't look like a CSS colour value")
 
     for at_id, at_def in actor_types.items():
         _check_actor_type(ctx, at_def, gd, f"{p}.actor_types.{at_id}")
@@ -251,6 +307,22 @@ def _check_extras(ctx: _Ctx, extras: dict, p: str) -> None:
                 if "label" not in t:
                     ctx.warn(f"{tp}.label", "no label set; will display as id")
 
+    # Cross-system XP heuristic. Milestones and Growth Pool are alternative
+    # advancement systems in canonical Cortex; turning both on at once is
+    # unusual but not strictly wrong (some homebrew might want both layers
+    # of XP). Surface as a warning so it shows up whenever the game-def is
+    # opened, character or no.
+    if (isinstance(extras.get("milestones"), dict)
+            and extras["milestones"].get("enabled")
+            and isinstance(extras.get("growth"), dict)
+            and extras["growth"].get("enabled")):
+        ctx.warn(
+            p,
+            "both Milestones and Growth pool are enabled; canonical Cortex "
+            "treats these as alternative XP systems. Disable one unless "
+            "your homebrew genuinely uses both.",
+        )
+
 
 # ===========================================================================
 # Character validation
@@ -284,6 +356,24 @@ def _check_character(ctx: _Ctx, gd: dict, ch: Any, p: str) -> None:
     for ps in at_def.get("prime_sets", []):
         if isinstance(ps, dict) and "id" in ps:
             ps_defs[ps["id"]] = ps
+
+    # Identity-side checks. The only field worth validating right now is
+    # the portrait: if set, it should be an embedded image data URI. We
+    # don't decode/verify the bytes -- a corrupt portrait will surface as
+    # a missing image in the rendered PDF, which is visibly obvious.
+    identity = ch.get("identity") or {}
+    portrait = identity.get("portrait")
+    if portrait is not None:
+        if not isinstance(portrait, str):
+            ctx.err(f"{p}.identity.portrait", "must be a string (image data URI)")
+        elif portrait and not portrait.startswith("data:image/"):
+            ctx.warn(
+                f"{p}.identity.portrait",
+                "is not a recognized image data URI; expected to start with "
+                "'data:image/'. The renderer will pass it through to <img src=...> "
+                "as-is, so external URLs will work but won't embed in the PDF "
+                "when offline.",
+            )
 
     char_prime_sets = ch.get("prime_sets")
     if char_prime_sets is None:
@@ -333,6 +423,44 @@ def _check_character(ctx: _Ctx, gd: dict, ch: Any, p: str) -> None:
                         f"{p}.extras.{field_name}.{k}",
                         f"{v!r} is not a recognized die",
                     )
+
+    # Cross-system XP heuristic: Milestones and Growth Pool are alternative
+    # advancement systems in canonical Cortex; turning both on at once is
+    # unusual but not strictly wrong (some homebrew might want both layers
+    # of XP). Surface as a warning at the actor-type level so it's visible
+    # whenever the game-def is opened.
+    if extras_def.get("growth", {}).get("enabled"):
+        char_extras = ch.get("extras") or {}
+        growth = char_extras.get("growth")
+        if growth is not None:
+            if not isinstance(growth, list):
+                ctx.err(f"{p}.extras.growth", "must be a list")
+            else:
+                for i, entry in enumerate(growth):
+                    ep = f"{p}.extras.growth[{i}]"
+                    if not isinstance(entry, dict):
+                        ctx.err(ep, "must be a mapping with die and text")
+                        continue
+                    die = entry.get("die")
+                    if die is not None and die not in VALID_DICE:
+                        ctx.warn(f"{ep}.die", f"{die!r} is not a recognized die")
+
+    # Session records: list of {name, note?}. Name should be present;
+    # note is optional. Same loose validation as growth.
+    if extras_def.get("sessions", {}).get("enabled"):
+        char_extras = ch.get("extras") or {}
+        sessions = char_extras.get("sessions")
+        if sessions is not None:
+            if not isinstance(sessions, list):
+                ctx.err(f"{p}.extras.sessions", "must be a list")
+            else:
+                for i, entry in enumerate(sessions):
+                    ep = f"{p}.extras.sessions[{i}]"
+                    if not isinstance(entry, dict):
+                        ctx.err(ep, "must be a mapping with at least a name")
+                        continue
+                    if not entry.get("name"):
+                        ctx.warn(f"{ep}.name", "session record has no name")
 
 
 def _check_prime_set_entries(
