@@ -17,7 +17,11 @@ _os.environ.setdefault("G_MESSAGES_DEBUG", "")
 # no console attached -- without this, a crash leaves the user with
 # nothing to send back as a bug report. Must happen before any other
 # code that might emit warnings/errors we want captured.
-from .. import _session_log as _session_log_module
+#
+# ABSOLUTE import deliberately: this module runs as __main__ under
+# PyInstaller, so `from .. import ...` would fail with "attempted
+# relative import with no known parent package". See test_entry_points.py.
+from cortex_portfolio import _session_log as _session_log_module
 _LOG_PATH = _session_log_module.install("editor")
 
 import sys
