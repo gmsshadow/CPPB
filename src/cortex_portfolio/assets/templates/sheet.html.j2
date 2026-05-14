@@ -33,7 +33,23 @@
     </style>
   {% endif %}
 </head>
-<body>
+<body class="{% if actor_type.extras and actor_type.extras.xp_track and actor_type.extras.xp_track.enabled %}has-xp-track{% endif %}">
+
+  {#- Optional XP track. A vertical column of fillable circles pinned to
+      the right margin, page 1 only. Pure worksheet scaffolding -- there
+      is no per-character XP value; players pencil in the circles during
+      play. Configured per actor type via extras.xp_track. -#}
+  {% if actor_type.extras and actor_type.extras.xp_track and actor_type.extras.xp_track.enabled %}
+    {% set xp_track = actor_type.extras.xp_track %}
+    <aside class="xp-track">
+      <div class="xp-track-label">{{ xp_track.label or 'XP' }}</div>
+      <div class="xp-track-pips">
+        {% for _ in range(xp_track.pips or 17) %}
+          <span class="xp-pip"></span>
+        {% endfor %}
+      </div>
+    </aside>
+  {% endif %}
 
   {# ============================================================
      Reusable macros

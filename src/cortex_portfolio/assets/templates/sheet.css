@@ -47,6 +47,14 @@
   --dice:      var(--ink);   /* die glyph colour. Defaults to body text;
                                 themeable separately via game.theme.dice. */
   --col-gap:   16pt;
+
+  /* Optional XP track geometry. Letter-tuned. The track is absolutely
+     positioned against the right margin on page 1; these control the
+     gap reserved for it and where the rail sits. If the default page
+     size ever changes, revisit --xp-track-height. */
+  --xp-track-width:   0.34in;  /* reserved right-margin gap */
+  --xp-track-top:     1.30in;  /* below the header band */
+  --xp-track-height:  8.35in;  /* page-1 content height below the header */
 }
 
 html, body {
@@ -56,6 +64,60 @@ html, body {
   font-size: 10.5pt;
   line-height: 1.35;
   margin: 0; padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Optional XP track (right-margin rail, page 1 only)
+   -------------------------------------------------------------------------- */
+/* The XP rail is page-1-only scaffolding. Reserving space for it via body
+   padding would inset *every* page (body spans all pages), wasting the
+   right margin on page 2+. Instead: when the actor type enables an XP
+   track, body switches to a named page flow, and only that flow's :first
+   page gets a widened right margin. The rail is then absolutely positioned
+   with a negative offset so it sits in that widened page-1 margin. Page 2+
+   keep the normal margin and full content width. */
+body.has-xp-track {
+  position: relative;
+  page: xptrack;
+}
+@page xptrack:first {
+  margin-right: calc(0.55in + var(--xp-track-width) + 0.08in);
+}
+
+.xp-track {
+  position: absolute;
+  top: var(--xp-track-top);
+  right: calc(-1 * (var(--xp-track-width) + 0.08in));
+  width: var(--xp-track-width);
+  height: var(--xp-track-height);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.xp-track-label {
+  font-family: "Helvetica", sans-serif;
+  font-weight: 700;
+  font-size: 8.5pt;
+  letter-spacing: 1pt;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6pt;
+}
+.xp-track-pips {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;  /* spread the pips down the full rail */
+  width: 100%;
+}
+.xp-pip {
+  display: block;
+  width: 11pt;
+  height: 11pt;
+  border: 0.75pt solid var(--rule);
+  border-radius: 50%;
+  background: var(--paper);
 }
 
 h1, h2 { font-family: "Helvetica", "Arial", sans-serif; font-weight: 600; }

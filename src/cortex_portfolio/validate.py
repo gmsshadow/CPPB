@@ -323,6 +323,32 @@ def _check_extras(ctx: _Ctx, extras: dict, p: str) -> None:
             "your homebrew genuinely uses both.",
         )
 
+    # XP track: a vertical column of fillable pips on the sheet's right
+    # margin (page 1 only). Pure worksheet scaffolding -- no per-character
+    # value. Just check the shape is sane.
+    xp = extras.get("xp_track")
+    if xp is not None:
+        if not isinstance(xp, dict):
+            ctx.err(f"{p}.xp_track", "must be a mapping")
+        else:
+            if "enabled" in xp and not isinstance(xp["enabled"], bool):
+                ctx.warn(f"{p}.xp_track.enabled", "should be true or false")
+            pips = xp.get("pips")
+            if pips is not None:
+                if not isinstance(pips, int) or isinstance(pips, bool):
+                    ctx.err(f"{p}.xp_track.pips", "must be an integer")
+                elif pips < 1:
+                    ctx.err(f"{p}.xp_track.pips", "must be at least 1")
+                elif pips > 60:
+                    ctx.warn(
+                        f"{p}.xp_track.pips",
+                        f"{pips} pips is a lot; the rail may get cramped. "
+                        f"Hammerheads uses 17.",
+                    )
+            label = xp.get("label")
+            if label is not None and not isinstance(label, str):
+                ctx.warn(f"{p}.xp_track.label", "should be a string")
+
 
 # ===========================================================================
 # Character validation

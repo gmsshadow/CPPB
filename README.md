@@ -205,6 +205,26 @@ renderer will pass any string through to `<img src="…">`. So external
 URLs work too, with the caveat that they won't embed in offline PDFs
 (the validator warns about this).
 
+### XP track
+
+An optional Hammerheads-style XP track: a vertical column of fillable
+circles ("pips") down the right margin of page 1. Enable it per actor
+type:
+
+```json
+"extras": {
+  "xp_track": { "enabled": true, "pips": 17, "label": "XP" }
+}
+```
+
+`pips` defaults to 17 (the Hammerheads count); `label` defaults to "XP".
+It is pure worksheet scaffolding — there is no per-character XP value,
+players just pencil in the circles during play, the same approach as the
+writable PP box.
+
+The track is page-1 only. Page 1's right margin widens to make room;
+later pages keep the full content width.
+
 ### Alternative XP systems
 
 Cortex games use one of several XP/advancement systems. The schema

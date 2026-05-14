@@ -743,6 +743,34 @@ class ExtrasForm(QWidget):
         sessions_layout.addWidget(sessions_info)
         outer.addWidget(sessions_box)
 
+        # ----- XP track -----------------------------------------------
+        xp_box = QGroupBox("XP track")
+        xp_layout = QVBoxLayout(xp_box)
+        self._xp_enabled = QCheckBox("Enable XP track")
+        self._xp_enabled.toggled.connect(self._on_xp_enabled)
+        xp_layout.addWidget(self._xp_enabled)
+
+        xp_pips_row = QHBoxLayout()
+        xp_pips_row.addWidget(QLabel("Number of pips"))
+        self._xp_pips = QSpinBox()
+        self._xp_pips.setRange(1, 60)
+        self._xp_pips.setValue(17)
+        self._xp_pips.valueChanged.connect(self._on_xp_pips)
+        xp_pips_row.addWidget(self._xp_pips)
+        xp_pips_row.addStretch(1)
+        xp_layout.addLayout(xp_pips_row)
+
+        xp_info = QLabel(
+            "A vertical column of fillable circles down the right margin of "
+            "page 1 \u2014 the Hammerheads-style XP track. Pure worksheet "
+            "scaffolding: players pencil in the circles during play, there's "
+            "no recorded value. Hammerheads uses 17 pips."
+        )
+        xp_info.setWordWrap(True)
+        xp_info.setStyleSheet("color: #666; padding-left: 18px;")
+        xp_layout.addWidget(xp_info)
+        outer.addWidget(xp_box)
+
         outer.addStretch(1)
 
     # ----------------------------------------------------------------
@@ -770,6 +798,10 @@ class ExtrasForm(QWidget):
 
             sessions = extras.get("sessions") or {}
             self._sessions_enabled.setChecked(bool(sessions.get("enabled")))
+
+            xp = extras.get("xp_track") or {}
+            self._xp_enabled.setChecked(bool(xp.get("enabled")))
+            self._xp_pips.setValue(int(xp.get("pips") or 17))
         finally:
             self._suspend = False
 
@@ -888,4 +920,21 @@ class ExtrasForm(QWidget):
         if self._suspend or self._extras is None:
             return
         self._extras.setdefault("sessions", {})["enabled"] = checked
+        self.dataChanged.emit(self._extras)
+
+    def _on_xp_enabled(self, checked: bool) -> None:
+        if self._suspend or self._extras is None:
+            return
+        xp = self._extras.setdefault("xp_track", {})
+        xp["enabled"] = checked
+        # Seed a sensible pip count the first time it's switched on so the
+        # rendered track isn't empty/degenerate.
+        if checked and "pips" not in xp:
+            xp["pips"] = self._xp_pips.value()
+        self.dataChanged.emit(self._extras)
+
+    def _on_xp_pips(self, value: int) -> None:
+        if self._suspend or self._extras is None:
+            return
+        self._extras.setdefault("xp_track", {})["pips"] = value
         self.dataChanged.emit(self._extras)
