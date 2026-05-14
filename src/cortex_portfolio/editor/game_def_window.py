@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
+    QScrollArea,
     QSplitter,
     QStackedWidget,
     QStatusBar,
@@ -339,10 +340,27 @@ class GameDefWindow(QMainWindow):
 
         # Connect dataChanged so edits flow back through the window.
         form.dataChanged.connect(lambda _: self._on_data_changed(payload))
-        self._form_cache[payload] = form
-        return form
+
+        # Wrap the form in a scroll area. Forms like a PrimeSetForm with a
+        # long predefined-items list, or a GameForm with the full theme
+        # picker, can easily exceed the centre pane's height -- without
+        # this, the overflow is just clipped and unreachable. The cache
+        # holds the QScrollArea; _load_into_form unwraps via .widget() to
+        # reach the real form for set_data() calls.
+        scroll = QScrollArea()
+        scroll.setWidget(form)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self._form_cache[payload] = scroll
+        return scroll
 
     def _load_into_form(self, payload: tuple, form: QWidget) -> None:
+        # _get_form caches real forms wrapped in a QScrollArea; unwrap to
+        # reach the actual form widget that carries set_data(). The
+        # "prime_sets" group placeholder is a bare QLabel (no set_data,
+        # and the kind-dispatch below skips it anyway).
+        if isinstance(form, QScrollArea):
+            form = form.widget()
         kind = payload[0]
         if kind == "game":
             form.set_data(self._game)
