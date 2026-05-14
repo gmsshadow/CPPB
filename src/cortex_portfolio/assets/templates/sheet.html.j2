@@ -70,10 +70,10 @@
       {% if show_statement or show_description or show_sfx or show_limits or show_subtraits %}
         <div class="trait-body">
           {% if show_statement %}
-            <p class="detail detail--statement">"{{ t.statement }}"</p>
+            <p class="detail detail--statement">"{{ t.statement | inline_glyphs }}"</p>
           {% endif %}
           {% if show_description %}
-            <p class="detail">{{ t.description }}</p>
+            <p class="detail">{{ t.description | inline_glyphs }}</p>
           {% endif %}
           {% if show_subtraits %}
             <ul class="sub-traits{% if not show_dice %} sub-traits--inline{% endif %}" data-label="{{ sub_label }}">
@@ -90,14 +90,14 @@
           {% if show_sfx %}
             <ul class="sfx-list">
               {% for sfx in t.sfx %}
-                <li><strong>{{ sfx.name }}.</strong> {{ sfx.text }}</li>
+                <li><strong>{{ sfx.name }}.</strong> {{ sfx.text | inline_glyphs }}</li>
               {% endfor %}
             </ul>
           {% endif %}
           {% if show_limits %}
             <ul class="limits-list">
               {% for lim in t.limits %}
-                <li><strong>{{ lim.name }}.</strong> {{ lim.text }}</li>
+                <li><strong>{{ lim.name }}.</strong> {{ lim.text | inline_glyphs }}</li>
               {% endfor %}
             </ul>
           {% endif %}
@@ -136,7 +136,7 @@
             {% for tier_key, tier_val in m.tiers.items() %}
               <div class="tier">
                 <span class="tier-key">{{ tier_key }}</span>
-                <span class="tier-value">{{ tier_val }}</span>
+                <span class="tier-value">{{ tier_val | inline_glyphs }}</span>
               </div>
             {% endfor %}
           </div>
@@ -162,7 +162,7 @@
             {% for g in sec.data %}
               <li class="growth-row">
                 <span class="growth-die">{{ [g.die] | dice }}</span>
-                <span class="growth-text">{{ g.text }}</span>
+                <span class="growth-text">{{ g.text | inline_glyphs }}</span>
               </li>
             {% endfor %}
           </ul>
@@ -176,7 +176,7 @@
             {% for s in sec.data %}
               <li class="session-row">
                 <span class="session-name">{{ s.name }}</span>
-                {% if s.note %}<span class="session-note">{{ s.note }}</span>{% endif %}
+                {% if s.note %}<span class="session-note">{{ s.note | inline_glyphs }}</span>{% endif %}
               </li>
             {% endfor %}
           </ul>
@@ -185,7 +185,7 @@
         {% endif %}
 
       {% elif sec.kind == 'notes' %}
-        <div class="notes"><p>{{ sec.data }}</p></div>
+        <div class="notes"><p>{{ sec.data | inline_glyphs }}</p></div>
       {% endif %}
     </section>
   {% endmacro %}
@@ -202,7 +202,7 @@
           <span class="callsign">"{{ character.identity.callsign }}"</span>
         {% endif %}
         {% if character.identity.concept %}
-          <span class="concept">{{ character.identity.concept }}</span>
+          <span class="concept">{{ character.identity.concept | inline_glyphs }}</span>
         {% endif %}
       </div>
     </div>

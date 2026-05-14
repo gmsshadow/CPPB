@@ -107,6 +107,82 @@ def icon_glyph(name: str | None) -> Markup:
 
 
 # ---------------------------------------------------------------------------
+# Inline-glyph token expansion in free text.
+#
+# Authors can embed token markers like {pp}, {d8}, {xp} in any free-text
+# field (SFX, Limit, descriptions, statements, etc.) to get a rendered
+# glyph inline with the prose. Recognized tokens:
+#
+#   {pp}             -- the maroon Plot Point pill ("PP")
+#   {xp}             -- the muted Experience Point pill ("XP")
+#   {d4} .. {d12}    -- die icons matching the existing dice font
+#
+# Tokens are case-insensitive: {PP}, {pp}, {Pp} all work the same. Unknown
+# tokens pass through unchanged (the literal characters appear in the PDF),
+# so authors can safely write things like "spend {pp}" but also "see {ref}"
+# without weird substitutions.
+#
+# Implementation: regex sweep over the input string. The text *outside*
+# tokens still needs HTML-escaping; tokens we replace get marked safe.
+# We do this by piecing together escaped non-token segments with raw
+# glyph HTML for matched tokens, then returning Markup so Jinja doesn't
+# escape it again.
+# ---------------------------------------------------------------------------
+
+import re as _re
+from markupsafe import escape as _escape
+
+_INLINE_TOKEN_RE = _re.compile(r"\{([A-Za-z0-9]+)\}")
+
+
+def _inline_die_html(rating: str) -> str:
+    """Inline die span. Reuses the body dice font via a modifier class so
+    we can size it down to match surrounding prose."""
+    digit = DIE_DIGIT.get(rating.lower())
+    if digit is None:
+        return f'<span class="die die--unknown">{_escape(rating)}</span>'
+    return f'<span class="die die--inline" data-rating="{rating.lower()}">{digit}</span>'
+
+
+def _inline_token_html(token: str) -> str | None:
+    """Return the HTML to substitute for a known inline token, or None
+    if the token isn't recognized (caller leaves the literal text alone)."""
+    key = token.lower()
+    if key == "pp":
+        return '<span class="pp-pill pp-pill--inline">PP</span>'
+    if key == "xp":
+        return '<span class="xp-pill pp-pill--inline">XP</span>'
+    if key in DIE_DIGIT:        # d4, d6, d8, d10, d12
+        return _inline_die_html(key)
+    return None
+
+
+def inline_glyphs(text: str | None) -> Markup:
+    """Expand inline glyph tokens in `text`. See module-level comment."""
+    if not text:
+        return Markup("")
+
+    parts: list[str] = []
+    last = 0
+    for m in _INLINE_TOKEN_RE.finditer(text):
+        # Anything between the last match and this one is plain text;
+        # escape it the same way Jinja's autoescape would have.
+        if m.start() > last:
+            parts.append(str(_escape(text[last:m.start()])))
+        substitution = _inline_token_html(m.group(1))
+        if substitution is None:
+            # Unknown token. Pass the literal "{foo}" through, escaped.
+            parts.append(str(_escape(m.group(0))))
+        else:
+            parts.append(substitution)
+        last = m.end()
+    # Trailing text after the last match.
+    if last < len(text):
+        parts.append(str(_escape(text[last:])))
+    return Markup("".join(parts))
+
+
+# ---------------------------------------------------------------------------
 # Actor type resolution. The game definition contains an `actor_types` map
 # keyed by id (e.g. "character", "scene", "ship"). The character file picks
 # one via its `actor_type` field (defaults to "character").
@@ -332,6 +408,7 @@ def render_pdf(game_path: Path, character_path: Path, output_path: Path) -> Path
         lstrip_blocks=True,
     )
     env.filters["dice"] = dice_icons
+    env.filters["inline_glyphs"] = inline_glyphs
     env.globals["icon_glyph"] = icon_glyph
 
     template = env.get_template("sheet.html.j2")

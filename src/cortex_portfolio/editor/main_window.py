@@ -15,6 +15,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import os
+import sys
+
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QAction, QKeySequence
 from PyQt6.QtWidgets import (
@@ -128,6 +131,15 @@ class MainWindow(QMainWindow):
         act_render.setShortcut(QKeySequence("Ctrl+R"))
         act_render.triggered.connect(self._on_render)
         render_menu.addAction(act_render)
+
+        help_menu = bar.addMenu("&Help")
+        act_open_logs = QAction("Open &Log Folder", self)
+        act_open_logs.setToolTip(
+            "Open the folder where session logs are saved. If something "
+            "crashes, attach the most recent file when reporting the issue."
+        )
+        act_open_logs.triggered.connect(self._on_open_log_folder)
+        help_menu.addAction(act_open_logs)
 
     def _build_central(self) -> None:
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -285,6 +297,31 @@ class MainWindow(QMainWindow):
         self._dirty = False
         self._update_window_title()
         self.statusBar().showMessage(f"Saved {path}", 3000)
+
+    # ==================================================================
+    # Help menu
+    # ==================================================================
+    def _on_open_log_folder(self) -> None:
+        """Open the per-session log folder in the OS file browser. Hook
+        for the Help menu item -- users need an obvious way to find their
+        logs when reporting a bug."""
+        import subprocess
+        from .. import _session_log
+
+        d = _session_log.log_dir()
+        try:
+            if sys.platform == "win32":
+                os.startfile(str(d))  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.run(["open", str(d)], check=False)
+            else:
+                subprocess.run(["xdg-open", str(d)], check=False)
+        except Exception as e:
+            QMessageBox.information(
+                self, "Log folder",
+                f"Couldn't open the folder automatically. It's at:\n\n{d}\n\n"
+                f"({e})",
+            )
 
     # ==================================================================
     # Render

@@ -12,6 +12,14 @@ import os as _os
 _os.environ.setdefault("GIO_USE_VFS", "local")
 _os.environ.setdefault("G_MESSAGES_DEBUG", "")
 
+# Capture per-session stdout/stderr to a log file under the user's local
+# app data. Critical for Explorer-launched .exe sessions where there is
+# no console attached -- without this, a crash leaves the user with
+# nothing to send back as a bug report. Must happen before any other
+# code that might emit warnings/errors we want captured.
+from .. import _session_log as _session_log_module
+_LOG_PATH = _session_log_module.install("editor")
+
 import sys
 
 from PyQt6.QtWidgets import QApplication

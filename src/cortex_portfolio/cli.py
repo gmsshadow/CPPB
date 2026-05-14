@@ -17,6 +17,13 @@ import os as _os
 _os.environ.setdefault("GIO_USE_VFS", "local")
 _os.environ.setdefault("G_MESSAGES_DEBUG", "")
 
+# Per-session log capture. See _session_log for the rationale. Less
+# critical for the CLI than for the editor (CLI users have a console)
+# but cheap and uniform with the editor, and helpful when something
+# inside WeasyPrint or the validator misbehaves.
+from . import _session_log
+_LOG_PATH = _session_log.install("cli")
+
 import argparse
 import json
 import sys

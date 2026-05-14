@@ -244,6 +244,26 @@ To use a new icon, add the codepoint to `FA_ICONS` in `render.py`.
 Codepoints are listed in the official cheatsheet at
 fontawesome.com/v5/cheatsheet/free/solid.
 
+## Logs
+
+Every run of the CLI or editor writes a timestamped log file to a
+per-user folder, capturing everything that went to stdout/stderr plus
+any uncaught Python exceptions. This is what makes the bundled `.exe`
+debuggable when launched from Explorer (no console attached).
+
+Locations:
+
+- **Windows:** `%LOCALAPPDATA%\CortexPortfolio\logs\`
+- **macOS:** `~/Library/Logs/CortexPortfolio/`
+- **Linux:** `$XDG_STATE_HOME/CortexPortfolio/logs/` (defaults to `~/.local/state/CortexPortfolio/logs/`)
+
+The editor exposes this folder via **Help → Open Log Folder**. If the
+app crashes or behaves oddly, the most recent log in there is the
+single most useful thing to attach when asking for help.
+
+Only the 10 most recent log files are kept; older ones get pruned at
+each startup so the folder doesn't accumulate forever.
+
 ## Troubleshooting
 
 ### `OSError: cannot load library 'libgobject-2.0-0'` on Windows
@@ -323,6 +343,31 @@ hiddenimports += qt_hiddenimports
 ```
 
 and add `qt_binaries` to the `binaries=[]` argument of `Analysis(...)`.
+
+## Inline glyphs in text
+
+Free-text fields (SFX, Limits, descriptions, statements, notes, growth
+entries, milestone tier text, session notes, concept subtitle) recognize
+a handful of inline token markers that render as styled glyphs:
+
+| Token | Renders as |
+|---|---|
+| `{pp}` | maroon **PP** pill |
+| `{xp}` | muted **XP** pill |
+| `{d4}` through `{d12}` | inline die glyph at the matching rating |
+
+Example SFX text:
+
+```
+Spend a {pp} to step up Dark Magic for one roll. Roll an extra {d8}
+with the attack pool. Gain {xp} when the cost catches up with you.
+```
+
+Tokens are case-insensitive (`{PP}`, `{pp}`, `{Pp}` all work). Unknown
+tokens like `{ref}` pass through as literal text — no false-positive
+substitution. To produce a literal `{pp}` in text without substitution,
+use any unknown token form (e.g. `{pp_literal}`) — there's no escape
+syntax because the practical need hasn't come up.
 
 ## Project layout
 

@@ -259,6 +259,51 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
 .die--empty   { font-family: inherit; font-size: 12pt; color: var(--muted); }
 .die--unknown { font-family: inherit; font-size: 9pt;  color: red; }
 
+/* Inline dice for use inside flowing prose (SFX, descriptions, etc.).
+   Smaller than the section-icon-sized .die so they fit alongside text
+   without dominating the line. Same font + glyph, just resized. */
+.die--inline {
+  font-size: 11pt;
+  min-width: 16pt;
+  vertical-align: -0.12em;
+  margin: 0 1pt;
+}
+
+/* Inline PP / XP pills. Match the header PP pill visually but shrink
+   the padding so they sit naturally in body text. Uses --accent for PP
+   and --muted for XP so they're visually distinct in the same paragraph
+   (e.g. "spend {pp} to earn {xp}"). */
+.pp-pill {
+  display: inline-block;
+  padding: 0pt 5pt;
+  border-radius: 99pt;
+  background: var(--accent);
+  color: white;
+  font-family: "Helvetica", sans-serif;
+  font-weight: 700;
+  font-size: 8pt;
+  letter-spacing: 0.5pt;
+  vertical-align: 0.1em;
+  margin: 0 1pt;
+}
+.xp-pill {
+  display: inline-block;
+  padding: 0pt 5pt;
+  border-radius: 99pt;
+  background: var(--muted);
+  color: white;
+  font-family: "Helvetica", sans-serif;
+  font-weight: 700;
+  font-size: 8pt;
+  letter-spacing: 0.5pt;
+  vertical-align: 0.1em;
+  margin: 0 1pt;
+}
+.pp-pill--inline {
+  /* Reserved for future tuning; right now both PP and XP inline pills
+     share the same base style. */
+}
+
 /* --------------------------------------------------------------------------
    Stress tracks
    -------------------------------------------------------------------------- */
