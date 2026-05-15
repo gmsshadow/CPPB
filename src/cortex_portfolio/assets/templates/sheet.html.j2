@@ -138,9 +138,15 @@
       {{ section_heading(sec.label, sec.icon) }}
 
       {% if sec.kind == 'prime_set' %}
-        <ul class="trait-list">
-          {% for t in sec.data %}{{ trait_li(t, sec.settings) }}{% endfor %}
-        </ul>
+        {% if sec.data %}
+          <ul class="trait-list">
+            {% for t in sec.data %}{{ trait_li(t, sec.settings) }}{% endfor %}
+          </ul>
+        {% else %}
+          {#- render_when_empty: section is enabled but has no entries.
+              Render writing lines so players can fill it in by hand. -#}
+          <div class="prime-set-blank"></div>
+        {% endif %}
 
       {% elif sec.kind == 'stress' %}
         <div class="stress-tracks">

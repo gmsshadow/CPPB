@@ -178,6 +178,11 @@ directly outside this project's CLI, you'll see them.
      fillable square next to each parent trait's die for tracking a
      temporarily stepped-down rating during play. Worksheet-only (no
      JSON value); sub-traits never get one.
+   - `render_when_empty` — by default, an empty prime set is skipped
+     entirely. With this on, the section still renders (its heading
+     plus four blank writing lines) so players can fill it in by hand
+     at the table. Same idiom as the empty-state Complications / Growth
+     / Sessions sections.
 4. Validate with `cortex-portfolio --check your.game.json`.
 5. Add example characters and validate them too.
 

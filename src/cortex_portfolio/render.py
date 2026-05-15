@@ -274,14 +274,20 @@ def build_rows(actor_type_def: dict, character: dict) -> list[list[dict]]:
     # 1. Prime sets in actor-type definition order.
     for ps in actor_type_def.get("prime_sets", []):
         entries = char_prime_sets.get(ps["id"]) or []
-        if not entries:
+        settings = ps.get("settings", {})
+        # By default, an empty prime set is skipped -- no point rendering an
+        # empty section. But authors can opt in with render_when_empty to
+        # reserve printable space (writing lines) on the sheet so players
+        # can fill the section in by hand at the table. Same pattern as
+        # the empty-state Complications / Growth / Sessions sections.
+        if not entries and not settings.get("render_when_empty"):
             continue
         sections.append({
             "kind": "prime_set",
             "ps_id": ps["id"],
             "label": ps.get("label", ps["id"]),
             "icon": ps.get("icon"),
-            "settings": ps.get("settings", {}),
+            "settings": settings,
             "data": entries,
             "full_width": _is_wide_prime_set(ps, entries),
         })

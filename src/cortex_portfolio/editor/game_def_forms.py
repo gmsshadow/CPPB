@@ -365,14 +365,15 @@ class PrimeSetForm(QWidget):
     # Flag definitions:
     #   key             -> (label, default value when first added)
     _FLAGS: list[tuple[str, str, bool]] = [
-        ("has_label",       "Trait has a name",                                 True),
-        ("has_dice",        "Trait has a die rating",                           True),
-        ("has_description", "Trait has a free-text description",                False),
-        ("has_statement",   "Trait has a quoted statement (e.g. Values)",       False),
-        ("has_sfx",         "Trait can declare SFX",                            False),
-        ("has_limits",      "Trait can declare Limits",                         False),
-        ("has_sub_traits",  "Trait can have sub-traits (Specialties, Powers)",  False),
-        ("has_stress_box",  "Trait has a stress box (Stricken & Shaken mod)",   False),
+        ("has_label",         "Trait has a name",                                 True),
+        ("has_dice",          "Trait has a die rating",                           True),
+        ("has_description",   "Trait has a free-text description",                False),
+        ("has_statement",     "Trait has a quoted statement (e.g. Values)",       False),
+        ("has_sfx",           "Trait can declare SFX",                            False),
+        ("has_limits",        "Trait can declare Limits",                         False),
+        ("has_sub_traits",    "Trait can have sub-traits (Specialties, Powers)",  False),
+        ("has_stress_box",    "Trait has a stress box (Stricken & Shaken mod)",   False),
+        ("render_when_empty", "Render this section even when the character has no entries (writing lines for the table)", False),
     ]
 
     def __init__(self, parent: QWidget | None = None) -> None:

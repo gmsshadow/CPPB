@@ -69,7 +69,8 @@ KNOWN_SETTINGS_FLAGS: frozenset[str] = frozenset({
     "has_sfx", "has_limits", "has_sub_traits",
     "sub_traits_label", "sub_traits_have_dice", "sub_traits_dice",
     "sub_traits_max", "limits_required",
-    "has_stress_box",   # Stricken & Shaken: per-trait fillable stress box
+    "has_stress_box",      # Stricken & Shaken: per-trait fillable stress box
+    "render_when_empty",   # Force the section to render even with no entries
 })
 
 

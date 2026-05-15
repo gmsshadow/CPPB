@@ -519,6 +519,23 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
   );
 }
 
+/* Empty prime set rendered as writing lines (settings.render_when_empty).
+   Same recipe as complications-blank/growth-blank/sessions-blank -- four
+   blank rows so the player can fill in their distinctions / values / etc.
+   by pen at the table.
+   NOTE: this is the fourth instance of the same writing-lines pattern.
+   A shared utility class would be cleaner; see TODO. */
+.prime-set-blank {
+  min-height: 80pt;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 19pt,
+    var(--rule) 19pt,
+    var(--rule) 19.5pt
+  );
+}
+
 /* --------------------------------------------------------------------------
    Notes
    -------------------------------------------------------------------------- */
