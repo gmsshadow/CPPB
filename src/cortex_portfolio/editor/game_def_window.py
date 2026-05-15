@@ -426,6 +426,31 @@ class GameDefWindow(QMainWindow):
 
         if kind == "prime_set":
             at_id, ps_id = payload[1], payload[2]
+
+            # Reordering. The renderer respects prime-set order, so moving
+            # an item changes how sections stack on the sheet -- useful when
+            # they pair inefficiently. Up/Down are disabled at the ends.
+            prime_sets = (self._game.get("actor_types", {})
+                          .get(at_id, {}).get("prime_sets") or [])
+            ids = [ps.get("id") for ps in prime_sets]
+            idx = ids.index(ps_id) if ps_id in ids else -1
+
+            act_up = QAction("Move up", self)
+            act_up.setEnabled(idx > 0)
+            act_up.triggered.connect(
+                lambda: self._move_prime_set(at_id, ps_id, -1)
+            )
+            menu.addAction(act_up)
+
+            act_down = QAction("Move down", self)
+            act_down.setEnabled(0 <= idx < len(prime_sets) - 1)
+            act_down.triggered.connect(
+                lambda: self._move_prime_set(at_id, ps_id, +1)
+            )
+            menu.addAction(act_down)
+
+            menu.addSeparator()
+
             act = QAction(f"Remove prime set '{ps_id}'", self)
             act.triggered.connect(lambda: self._remove_prime_set(at_id, ps_id))
             menu.addAction(act)
@@ -452,6 +477,26 @@ class GameDefWindow(QMainWindow):
         prime_sets.append(_seed_prime_set(ps_id))
         self._dirty = True
         self._update_window_title()
+        self._refresh_tree(select=("prime_set", at_id, ps_id))
+        self._schedule_validate()
+
+    def _move_prime_set(self, at_id: str, ps_id: str, delta: int) -> None:
+        """Shift a prime set by `delta` positions in its actor type's list
+        (-1 = up, +1 = down). The renderer reads this order directly, so
+        this is how the user controls section stacking on the sheet."""
+        prime_sets = (self._game.get("actor_types", {})
+                      .get(at_id, {}).get("prime_sets") or [])
+        ids = [ps.get("id") for ps in prime_sets]
+        if ps_id not in ids:
+            return
+        i = ids.index(ps_id)
+        j = i + delta
+        if not (0 <= j < len(prime_sets)):
+            return  # already at an end; nothing to do
+        prime_sets[i], prime_sets[j] = prime_sets[j], prime_sets[i]
+        self._dirty = True
+        self._update_window_title()
+        # Rebuild the tree and keep the moved item selected at its new spot.
         self._refresh_tree(select=("prime_set", at_id, ps_id))
         self._schedule_validate()
 

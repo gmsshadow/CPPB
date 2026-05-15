@@ -372,6 +372,7 @@ class PrimeSetForm(QWidget):
         ("has_sfx",         "Trait can declare SFX",                            False),
         ("has_limits",      "Trait can declare Limits",                         False),
         ("has_sub_traits",  "Trait can have sub-traits (Specialties, Powers)",  False),
+        ("has_stress_box",  "Trait has a stress box (Stricken & Shaken mod)",   False),
     ]
 
     def __init__(self, parent: QWidget | None = None) -> None:

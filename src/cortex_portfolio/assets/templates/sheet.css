@@ -263,6 +263,22 @@ h2 { font-size: 11pt; margin: 0 0 6pt 0;
 .trait-head .name      { flex: 1 1 auto; font-weight: 600; }
 .trait-head .die-cell  { flex: 0 0 auto; }
 
+/* Stricken & Shaken stress box. A small empty square the player pencils
+   a stepped-down rating into during play. Sits just left of the die so
+   the printed base rating and the hand-written current rating read
+   together. Uses --rule for the border so it matches the sheet's other
+   hairlines and picks up per-game theming. Worksheet-only -- always
+   empty in the rendered PDF. */
+.trait-head .stress-box {
+  flex: 0 0 auto;
+  width: 15pt;
+  height: 15pt;
+  border: 0.75pt solid var(--rule);
+  border-radius: 2pt;
+  background: var(--paper);
+  align-self: center;   /* baseline-align looks off for an empty box */
+}
+
 .trait-body { margin-top: 2pt; }
 .trait-body .detail            { color: var(--muted); font-size: 9.5pt; margin: 0; }
 .trait-body .detail--statement { font-style: italic; }

@@ -53,3 +53,35 @@ def timba_character() -> dict:
 @pytest.fixture
 def examples_dir() -> Path:
     return EXAMPLES_DIR
+
+
+@pytest.fixture
+def render_html():
+    """Render a game-def + character to the raw HTML string (no PDF step).
+
+    Lets template tests assert on markup directly without each one
+    re-creating the Jinja environment. Mirrors render_pdf's env setup.
+    """
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from cortex_portfolio.render import (
+        resolve_actor_type, build_rows, dice_icons, inline_glyphs,
+        icon_glyph, assets_dir,
+    )
+
+    def _render(game: dict, character: dict) -> str:
+        at = resolve_actor_type(game, character.get("actor_type"))
+        templates_dir = assets_dir() / "templates"
+        env = Environment(
+            loader=FileSystemLoader(str(templates_dir)),
+            autoescape=select_autoescape(["html", "xml"]),
+            trim_blocks=True, lstrip_blocks=True,
+        )
+        env.filters["dice"] = dice_icons
+        env.filters["inline_glyphs"] = inline_glyphs
+        env.globals["icon_glyph"] = icon_glyph
+        return env.get_template("sheet.html.j2").render(
+            game=game, actor_type=at, character=character,
+            rows=build_rows(at, character),
+        )
+
+    return _render

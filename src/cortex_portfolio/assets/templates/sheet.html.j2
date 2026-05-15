@@ -72,12 +72,21 @@
     {% set show_sfx        = settings.has_sfx and t.sfx %}
     {% set show_limits     = settings.has_limits and t.limits %}
     {% set show_subtraits  = settings.has_sub_traits and t.sub_traits %}
+    {% set show_stress_box = settings.has_stress_box %}
     {% set sub_label       = settings.sub_traits_label or 'Sub-traits' %}
     {% set sub_have_dice   = settings.sub_traits_have_dice if settings.sub_traits_have_dice is not none else true %}
 
     <li class="trait">
       <div class="trait-head">
         <span class="name">{{ t.name }}</span>
+        {#- Stricken & Shaken stress box: a small fillable square for
+            tracking a trait's temporarily-reduced rating during play.
+            Worksheet-only -- no JSON value, renders empty, sub-traits
+            never get one. Sits just left of the die so the player can
+            pencil the stepped-down rating beside the printed one. -#}
+        {% if show_stress_box %}
+          <span class="stress-box" aria-label="Stress / stricken rating"></span>
+        {% endif %}
         {% if show_dice %}
           <span class="die-cell">{{ t.dice | dice }}</span>
         {% endif %}
@@ -106,14 +115,16 @@
           {% if show_sfx %}
             <ul class="sfx-list">
               {% for sfx in t.sfx %}
-                <li><strong>{{ sfx.name }}.</strong> {{ sfx.text | inline_glyphs }}</li>
+                {#- Only emit the bold name + period when there's actually
+                    a name. A nameless SFX is just its descriptive text. -#}
+                <li>{% if sfx.name %}<strong>{{ sfx.name }}.</strong> {% endif %}{{ sfx.text | inline_glyphs }}</li>
               {% endfor %}
             </ul>
           {% endif %}
           {% if show_limits %}
             <ul class="limits-list">
               {% for lim in t.limits %}
-                <li><strong>{{ lim.name }}.</strong> {{ lim.text | inline_glyphs }}</li>
+                <li>{% if lim.name %}<strong>{{ lim.name }}.</strong> {% endif %}{{ lim.text | inline_glyphs }}</li>
               {% endfor %}
             </ul>
           {% endif %}

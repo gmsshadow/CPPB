@@ -174,8 +174,18 @@ directly outside this project's CLI, you'll see them.
    - `has_label` / `has_dice` / `has_description` / `has_statement`
    - `has_sfx` / `has_limits` / `has_sub_traits`
    - `sub_traits_label` / `sub_traits_have_dice` / `sub_traits_dice`
+   - `has_stress_box` — the Stricken & Shaken mod: renders a small
+     fillable square next to each parent trait's die for tracking a
+     temporarily stepped-down rating during play. Worksheet-only (no
+     JSON value); sub-traits never get one.
 4. Validate with `cortex-portfolio --check your.game.json`.
 5. Add example characters and validate them too.
+
+Prime sets render on the sheet in the order they appear in the
+`prime_sets` list. In the game-definition editor, right-click a prime
+set in the tree to **Move up** / **Move down** — useful when sections
+stack inefficiently on the page and you want to nudge the two-column
+pairing.
 
 For non-trivial games, take a look at:
 
